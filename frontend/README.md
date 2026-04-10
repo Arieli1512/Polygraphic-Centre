@@ -1,73 +1,141 @@
-# React + TypeScript + Vite
+# Polygraphic Centre Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+This frontend is a React + TypeScript + Vite application using React 19, TypeScript 6, and Vite 8.
 
-Currently, two official plugins are available:
+## Requirements
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- Node.js 18 or newer
+- npm, Yarn, or pnpm
+- Git (optional, if you clone the repository)
+- Internet access to download dependencies
 
-## React Compiler
+## Recommended setup
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+Install dependencies from the `frontend` folder using your preferred package manager. The project scripts use Vite and TypeScript.
 
-## Expanding the ESLint configuration
+### Linux
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+1. Install Node.js.
+   - Ubuntu/Debian:
+     ```bash
+     sudo apt update
+     sudo apt install nodejs npm
+     ```
+   - Fedora/RHEL:
+     ```bash
+     sudo dnf install nodejs npm
+     ```
+   - Alternatively, use Node Version Manager (nvm):
+     ```bash
+     curl -fsSL https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.4/install.sh | bash
+     source ~/.bashrc
+     nvm install 20
+     nvm use 20
+     ```
+2. Verify Node.js and npm versions:
+   ```bash
+   node -v
+   npm -v
+   ```
+   Node should be 18+.
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+### macOS
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+1. Install Node.js via Homebrew:
+   ```bash
+   brew install node
+   ```
+   Or use nvm:
+   ```bash
+   curl -fsSL https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.4/install.sh | bash
+   source ~/.zshrc
+   nvm install 20
+   nvm use 20
+   ```
+2. Verify versions:
+   ```bash
+   node -v
+   npm -v
+   ```
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+### Windows
+
+1. Download and install Node.js from https://nodejs.org/.
+2. Ensure `npm` is available in PowerShell or Command Prompt.
+3. Verify installation:
+   ```powershell
+   node -v
+   npm -v
+   ```
+
+## Install dependencies
+
+Open a terminal in the `frontend` folder.
+
+### npm
+
+```bash
+cd /path/to/Polygraphic-Centre/frontend
+npm install
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+### Yarn
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+cd /path/to/Polygraphic-Centre/frontend
+yarn install
 ```
+
+### pnpm
+
+```bash
+cd /path/to/Polygraphic-Centre/frontend
+pnpm install
+```
+
+## Build and Run
+
+### Start development server
+
+```bash
+npm run dev
+```
+
+or with Yarn:
+
+```bash
+yarn dev
+```
+
+or with pnpm:
+
+```bash
+pnpm dev
+```
+
+Open the local URL shown in the terminal (typically `http://localhost:5173`).
+
+### Build production bundle
+
+```bash
+npm run build
+```
+
+### Preview production build
+
+```bash
+npm run preview
+```
+
+## Common scripts
+
+- Start development server: `npm run dev`
+- Build production assets: `npm run build`
+- Preview production build: `npm run preview`
+- Run ESLint: `npm run lint`
+
+## Notes
+
+- This project uses React 19 and TypeScript 6.
+- If you see a Node.js version mismatch, confirm the `node` command points to Node 18+.
+- Use the included package manager scripts rather than editing Vite configuration for standard local development.
