@@ -1,0 +1,513 @@
+# Polygraphic Centre - Podział zadań do Trello
+
+Niniejszy plik zawiera zadania wyodrębnione z planu wdrażania. Każde zadanie można skopiować do Trello wraz z opisem i podzadaniami. Zadania są zorganizowane wg fazy i głównego kanału pracy.
+
+## Faza 1: Fundamenty
+
+### 1.1 Ustandaryzować słownictwo projektu i model domeny
+
+- Zdefiniować kanoniczne nazwy ról i ich reprezentacje w bazie
+- Udokumentować automat stanów cyklu życia zamówienia
+- Stworzyć słownik terminów biznesowych do wspólnego użytku
+- Zaktualizować całą dokumentację projektu za pomocą spójnej terminologii
+
+### 1.2 Zdefiniować kontrakt API i format błędów
+
+- Ustandaryzować konwencje ścieżek REST API
+- Zdefiniować schemat odpowiedzi błędu (kod, wiadomość, szczegóły)
+- Zdefiniować strukturę wrappera odpowiedzi sukcesu
+- Stworzyć szkielet OpenAPI/Swagger
+
+### 1.3 Ustanowić strukturę projektu i konwencje nazewnictwa
+
+- Układ pakietów dla backendu (kontrolery, usługi, repozytoria, encje, dto, konfiguracja)
+- Struktura katalogów dla frontendu (strony, komponenty, hooki, usługi, narzędzia)
+- Wytyczne dotyczące nazewnictwa Java i stylu kodu
+- Wzorce nazewnictwa TypeScript i komponentów React
+
+### 1.4 Stworzyć lokalną konfigurację PostgreSQL opartą na Dockerze
+
+- Napisać docker-compose.yml dla PostgreSQL
+- Stworzyć skrypt uruchomienia (start-db.sh lub odpowiednik dla Windows)
+- Stworzyć skrypt zatrzymania
+- Stworzyć skrypt zrzutu bazy danych
+- Stworzyć skrypt przywracania
+- Udokumentować użycie w README projektu
+
+### 1.5 Stworzyć szablony plików zmiennych środowiskowych
+
+- Backend .env.example ze zmiennymi bazy, Firebase, GCS, Pub/Sub, poczty
+- Frontend .env.example z punktem końcowym API i konfiguracją projektu Firebase
+- Udokumentować, skąd pochodzą rzeczywiste wartości
+
+### 1.6 Skonfigurować wspólne repozytorium kodu i strategię gałęzi
+
+- Skonfigurować nazewnictwo gałęzi main, develop, feature
+- Zdefiniować oczekiwania dotyczące pull requestów i przeglądu kodu
+- Udokumentować sposób scalania i tagowania wydań
+
+---
+
+## Faza 2: Fundamenty backendu
+
+### 2.1 Dodać zależności bazy danych i trwałości
+
+- Dodać Spring Data JPA
+- Dodać sterownik PostgreSQL
+- Dodać Hibernate ORM
+- Dodać pooling połączeń (HikariCP)
+- Zaktualizować build.gradle
+
+### 2.2 Stworzyć podstawowe encje domeny
+
+- User (generyczna, z informacją o pod-roli)
+- PrintShop
+- PrintOption (typ, tryb kolorów, format)
+- PricingRule
+- PickupSlot
+- Order
+- OrderItem
+- Balance / ClientBalance
+- Notification (dziennik oczekujących/wysłanych)
+
+### 2.3 Stworzyć repozytoria Spring Data
+
+- UserRepository
+- PrintShopRepository
+- PrintOptionRepository
+- PricingRuleRepository
+- PickupSlotRepository
+- OrderRepository
+- OrderItemRepository
+- BalanceRepository
+
+### 2.4 Dodać walidację i obsługę błędów
+
+- Globalny handler wyjątków (@ControllerAdvice)
+- Niestandardowe klasy wyjątków
+- Walidacja wejścia za pomocą Bean Validation (JSR-380)
+- Ustandaryzowany formatter odpowiedzi błędu
+
+### 2.5 Dodać integrację Spring Security i Firebase JWT
+
+- Zależność Spring Security i konfiguracja
+- Konfiguracja Firebase Admin SDK
+- Weryfikacja tokenu JWT i ekstrakcja oświadczeń
+- Mapowanie ról z oświadczeń do ról aplikacji
+- Adnotacje @Secured i @PreAuthorize
+
+### 2.6 Dodać zarządzanie konfiguracją
+
+- application-local.properties
+- application-dev.properties
+- application-prod.properties
+- Fasole ConfigurationProperties do konfiguracji zewnętrznej
+- Konfiguracja rejestrowania (SLF4J)
+
+### 2.7 Dodać dokumentację OpenAPI/Swagger
+
+- Zależność springdoc-openapi
+- Konfiguracja Swagger UI
+- Dokumentować główne punkty końcowe w miarę ich tworzenia
+
+### 2.8 Stworzyć szkielety warstwy usług
+
+- UserService
+- PrintShopService
+- PricingService (obliczanie kosztów)
+- OrderService (tworzenie, przejścia stanów)
+- BalanceService (weryfikacja, potrącenie)
+- NotificationService (publikowanie zdarzeń)
+
+---
+
+## Faza 3: Fundamenty frontendu
+
+### 3.1 Skonfigurować routing i strukturę stron
+
+- Dodać React Router v6 (lub odpowiednik)
+- Stworzyć szkielety stron: Gość, Logowanie/Rejestracja, Panel Klienta, Kolejka Pracownika, Ustawienia Menedżera, Panel Administratora
+- Stworzyć podstawową powłokę nawigacji z menu opartym na rolach
+- Skonfigurować straże trasy dla autentykacji i autoryzacji
+
+### 3.2 Stworzyć kontekst i stan autentykacji
+
+- Inicjalizacja Firebase SDK
+- Provider kontekstu autentykacji (użytkownik, token, ładowanie, błąd)
+- Funkcje logowania/wylogowania/rejestracji
+- Mechanizm odświeżenia tokenu
+- Zachowywanie stanu autentykacji w localStorage
+
+### 3.3 Stworzyć warstwę klienta API
+
+- Wrapper Axios lub Fetch
+- Iniekcja tokenu Bearer
+- Obsługa błędów i odświeżenie tokenu przy 401
+- Konfiguracja adresu URL backendu na podstawie środowiska
+- Definicje typów dla typowych odpowiedzi API
+
+### 3.4 Stworzyć wzorce formularzy i walidację
+
+- Komponenty formularzy wielokrotnego użytku
+- Walidacja wejścia (po stronie klienta)
+- Wzorce wyświetlania komunikatów o błędach
+- Stany ładowania dla operacji asynchronicznych
+
+### 3.5 Stworzyć komponenty podstawowego układu
+
+- Nagłówek z nawigacją i menu użytkownika
+- Pasek boczny do nawigacji opartej na rolach
+- Główny obszar treści z responsywną siatką
+- Stopka
+- Rozwiązanie responsywne dostosowane do urządzeń mobilnych
+
+### 3.6 Zastąpić starterowy App.tsx
+
+- Usunąć demo licznika i obrazy bohatera
+- Zintegrować router i kontekst autentykacji
+- Dodać warunkowe renderowanie dla widoków uwierzytelnionych vs. gościa
+- Dodać granicę błędu lub system powiadomień/alertów
+
+---
+
+## Faza 4: Główny przepływ klienta
+
+### 4.1 Stworzyć stronę przeglądania drukalni
+
+- Lista dostępnych drukarni (Gość może przeglądać)
+- Wyświetl lokalizację i podstawowe szczegóły
+- Kliknij, aby wyświetlić szczegóły drukalni/ceny
+
+### 4.2 Stworzyć kalkulator szacowania kosztów
+
+- Wejście parametrów wydruku (kopie, kolor, format, itp.)
+- Wywołaj backend API cen
+- Wyświetl szacunkowy koszt
+- Przechowaj szacunek w sesji dla przepływu zamówienia
+
+### 4.3 Wdrażanie rejestracji i logowania użytkownika
+
+- Strona rejestracji poczty electronicznej/hasła Firebase
+- Strona logowania Firebase
+- Połącz lokalny rekord użytkownika w bazie danych po pomyślnym uwierzytelnieniu Firebase
+- Przekieruj do panelu klienta po udanym logowaniu
+
+### 4.4 Stworzyć przepływ przesyłania plików
+
+- Wygeneruj podpisany adres URL przesyłania z backendu
+- Bezpośrednie przesyłanie przeglądarki do Google Cloud Storage
+- Wskaźnik postępu
+- Obsługa błędów (typ pliku, rozmiar, niepowodzenie przesyłania)
+- Zaktualizuj zamówienie o odniesienie pliku po pomyślnym przesyłaniu
+
+### 4.5 Stworzyć stronę przesyłania zamówienia
+
+- Wyświetl przegląd szacunkowego kosztu
+- Potwierdź drukarnię, parametry wydruku, plik, czas odbioru
+- Sprawdzenie salda i przepływ płatności (jeśli dotyczy)
+- Prześlij zamówienie do backendu
+- Pokaż potwierdzenie z ID zamówienia
+
+### 4.6 Stworzyć widok historii zamówień klienta
+
+- Lista przeszłych i bieżących zamówień klienta
+- Sortuj/filtruj wg stanu, daty, drukalni
+- Pokaż podstawowe szczegóły zamówienia (koszt, status, czas odbioru)
+- Link do widoku szczegółów zamówienia
+
+### 4.7 Stworzyć stronę szczegółów zamówienia klienta
+
+- Pokaż pełne informacje o zamówieniu
+- Pokaż metadane pliku (nazwa, rozmiar, czas przesyłania)
+- Pokaż historię statusu/oś czasu
+- Przycisk edycji lub anulowania (jeśli status na to pozwala)
+- Preferencje powiadomień (opcjonalne na v1)
+
+---
+
+## Faza 5: Operacje pracowników
+
+### 5.1 Stworzyć widok kolejki zamówień pracownika
+
+- Lista aktywnych zamówień dla drukalni pracownika
+- Sortuj wg czasu odbioru (rosnąco)
+- Filtruj wg stanu (oczekujące, w trakcie, gotowe)
+- Pokaż podsumowanie zamówienia (nazwa klienta, nazwa pliku, parametry, slot odbioru)
+- Kliknij, aby otworzyć widok szczegółów
+
+### 5.2 Stworzyć stronę szczegółów zamówienia pracownika
+
+- Pokaż pełne informacje o zamówieniu
+- Przycisk pobierania pliku (bezpieczny link)
+- Przyciski zmiany stanu (zaakceptuj, oznacz jako w trakcie, oznacz jako gotowe)
+- Przycisk raportu o problemach (jeśli plik jest uszkodzony/bezużyteczny)
+- Wyświetlanie powiadomień klienta
+
+### 5.3 Wdrażanie API aktualizacji stanu zamówienia
+
+- Punkt końcowy backendu do zmiany stanu zamówienia
+- Walidacja (tylko dozwolone przejścia stanów)
+- Bezpieczeństwo transakcji (sprawdzenia salda/zapasów, jeśli dotyczy)
+- Wyzwalacz zdarzenia powiadomienia po zmianie stanu
+
+### 5.4 Wdrażanie przepływu raportu o problemach
+
+- Oznacz zamówienie jako problematyczne
+- Dodaj przyczynę/notatkę
+- Automatycznie powiadom klienta
+- Wstrzymaj przetwarzanie zamówienia
+- Alert dla menedżera/administratora
+
+### 5.5 Stworzyć pobieranie pliku pracownika
+
+- Bezpieczne adresy URL plików przy użyciu podpisanych tokenów GCS
+- Rejestrowanie audytu pobierań
+- Obsługa błędów dla brakujących/usuniętych plików
+
+---
+
+## Faza 6: Konfiguracja i administracja
+
+### 6.1 Stworzyć stronę konfiguracji drukalni menedżera (szkielet)
+
+- Wyświetl nazwę drukalni i podstawowe informacje
+- Widok konfiguracji cen (układ szkieletu)
+- Widok konfiguracji godzin otwarcia (układ szkieletu)
+- Widok konfiguracji limitów pojemności (układ szkieletu)
+- Widok konfiguracji opcji wydruku (układ szkieletu)
+
+### 6.2 Wdrażanie zarządzania cenami menedżera
+
+- Lista bieżących opcji wydruku i cen
+- Dodaj/edytuj/usuń reguły cenowe
+- Walidacja (kwoty dodatnie, brak nakładających się reguł)
+- Utrwalaj w bazie danych
+- Publikowanie w pamięci podręcznej backendu w czasie rzeczywistym lub zaplanowane
+
+### 6.3 Wdrażanie godzin otwarcia menedżera i slotów
+
+- Zdefiniuj godziny otwarcia drukalni
+- Zdefiniuj sloty czasowe odbioru i dostępność
+- Ustaw limity pojemności slotu
+- Wyłącz/włącz sloty
+- Utrwalaj w bazie danych
+
+### 6.4 Stworzyć stronę zarządzania drukarnią administratora (szkielet)
+
+- Lista wszystkich drukarni
+- Dodaj nową drukarnię
+- Edytuj szczegóły drukalni (nazwa, lokalizacja, kontakt)
+- Włącz/wyłącz drukarnię
+- Widok konfiguracji drukalni
+
+### 6.5 Stworzyć stronę zarządzania personelem administratora (szkielet)
+
+- Lista kont personelu po drukalni
+- Dodaj/zaproś personel
+- Przypisz role (pracownik, menedżer, administrator)
+- Dezaktywuj personel
+- Widok dzienników aktywności personelu
+
+### 6.6 Stworzyć widok raportowania administratora (szkielet)
+
+- Selektor zakresu dat
+- Selektor typu raportu (podsumowanie dzienne, miesięczne)
+- Przycisk generowania raportu (symbol zastępczy)
+- Wyświetl raport w przeglądarce
+- Przycisk eksportu jako PDF (symbol zastępczy)
+
+### 6.7 Wdrażanie generowania raportu backendu
+
+- Zapytaj zamówienia w zakresie dat
+- Oblicz metryki (liczba zamówień, przychód, średni czas)
+- Formatuj jako PDF (biblioteka iText lub podobna)
+- Opcjonalnie: obsługuj eksport CSV
+- Bezpieczny punkt końcowy (tylko administrator)
+
+---
+
+## Faza 7: Wiadomości i powiadomienia
+
+### 7.1 Skonfigurować bibliotekę klienta Google Cloud Pub/Sub
+
+- Dodaj Firebase Admin SDK lub biblioteki GCP
+- Stwórz tematy Pub/Sub (order-events, notification-events)
+- Testuj publikowanie/subskrypcję lokalnie lub z emulatorem
+
+### 7.2 Wdrażanie publikowania zdarzeń zamówienia
+
+- Backend publikuje zdarzenia przy tworzeniu zamówienia
+- Publikuj przy zmianie stanu (w trakcie, gotowe, odebrane)
+- Publikuj przy przesyłaniu pliku
+- Dołącz metadane zamówienia w ścieżce ładunku zdarzenia
+
+### 7.3 Stworzyć pracownika powiadomień / usługę
+
+- Subskrybuj zdarzenia zamówienia
+- Przetłumacz zdarzenia na wiadomości powiadomień
+- Formatuj treść wiadomości e-mail (szczegóły zamówienia, linki akcji)
+- Wywołaj usługę SMTP/Gmail API w celu wysłania poczty
+- Zaloguj próby powiadomień
+
+### 7.4 Wdrażanie obsługi ponawiania i martwych liter
+
+- Skonfiguruj subskrypcję Pub/Sub z polityką ponawiania
+- Wdrażanie kolejki martwych liter dla stale nieudanych wiadomości
+- Monitoruj kolejkę martwych liter w celu ręcznej interwencji
+- Udokumentuj proces eskalacji
+
+### 7.5 Integracja SMTP lub Gmail API
+
+- Skonfiguruj usługę poczty (serwer SMTP lub Gmail API)
+- Szablon treści wiadomości e-mail (potwierdzenie zamówienia, aktualizacje statusu, gotowe do odbioru)
+- Wyślij z konta systemowego e-mail
+- Obsłużyć awarie dostawcy poczty z wdziękiem
+
+### 7.6 Dodaj ustawienia preferencji powiadomień (przyszłość)
+
+- Opcjonalnie pozwól klientom wyłączyć niektóre powiadomienia
+- Przechowuj preferencje w bazie danych
+- Sprawdź preferencje przed wysłaniem poczty
+- Uwaga: może być odłożone na po-v1
+
+---
+
+## Faza 8: Jakość i gotowość do wydania
+
+### 8.1 Dodać testy jednostkowe backendu
+
+- Test logiki kalkulatora cen
+- Przejścia stanów zamówienia testowego (ważne/nieprawidłowe)
+- Reguły walidacji testowej
+- Testy roli i sprawdzenia własności
+- Test weryfikacji salda
+
+### 8.2 Dodać testy integracyjne backendu
+
+- Operacje repozytorium testowego (CRUD)
+- Punkty końcowe API testowego (autentykacja, autoryzacja, ścieżka szczęścia, przypadki błędów)
+- Warstwa usług testowych z bazą danych
+- Wycofywanie transakcji testowej przy naruszeniach ograniczeń
+
+### 8.3 Dodać testy komponentów frontendu
+
+- Formularz logowania testowego
+- Formularz przesłania zamówienia testowego
+- Dostęp do trasy testowej opartej na roli
+- Obsługa błędów API testowego i logika ponawiania
+- Trwałość stanu autentykacji testowej
+
+### 8.4 Dodaj scenariusze end-to-end
+
+- Pełny przepływ gościa przeglądaj → zarejestruj → zaloguj → wyślij → prześlij zamówienie
+- Pełny przepływ pracownika otrzymaj zamówienie → pobierz plik → aktualizuj status
+- Pełny menedżer skonfiguruj ceny i godziny
+- Pełna administracja dodaj drukarnię i personel
+
+### 8.5 Skonfiguruj potok CI/CD (podstawowy)
+
+- Backend: kompiluj, uruchom testy, zbuduj JAR
+- Frontend: skompiluj TypeScript, uruchom linting, zbuduj pakiet
+- Uruchom na push do develop i pull requests
+- Zablokuj scalanie w przypadku niepowodzenia testu lub kompilacji
+
+### 8.6 Dodaj kontrole jakości kodu
+
+- Linting (backend: Checkstyle lub podobne; frontend: ESLint)
+- Formatowanie kodu (backend: Spotless; frontend: Prettier)
+- Próg pokrycia (cel 70%+)
+- Skanowanie podatności zależności
+
+### 8.7 Stworzyć dokumentację wdrażania
+
+- Wymagania wstępne wdrażania w chmurze (projekt GCP, zasoby)
+- Konfiguracja schematu bazy danych i strategia migracji
+- Kroki wdrażania backendu (buduj, konteneryzacja, jeśli dotyczy, wdrażaj)
+- Kroki wdrażania frontendu (buduj, publikuj w CDN lub host statyczny)
+- Zarządzanie konfiguracją i obsługa wpisów tajnych
+
+### 8.8 Stworzyć podręczniki operacyjne
+
+- Procedury kopii zapasowej i przywracania
+- Skalowanie i planowanie pojemności
+- Konfiguracja rejestrowania i monitorowania
+- Reagowanie na incydenty i rozwiązywanie problemów
+- Procedury wydania i wycofania
+
+### 8.9 Przygotuj środowisko przejściowe
+
+- Lustrzane odbicie architektury produkcyjnej (mniejsza skala)
+- Automatyczne wdrażanie z gałęzi develop
+- Testy dymne po każdym wdrażaniu
+- Dostęp zespołu do QA i demo
+
+### 8.10 Stworzyć listę kontrolną wydania
+
+- Wszystkie testy przechodzą
+- Spełnione wszystkie kryteria akceptacji
+- Dokumentacja zaktualizowana
+- Przejściowo zweryfikowana
+- Podpis gotowości do produkcji
+- Przygotowane notatki wydania
+
+---
+
+## Obawy między zespołami (Bieżące)
+
+### Rejestrowanie i monitorowanie
+
+- Rejestrowanie strukturalne ze zmienionymi identyfikatorami
+- Monitoruj czasy odpowiedzi API
+- Ostrzeż o błędach i wyjątkach
+- Śledzenie użycia przechowywania w chmurze i kosztów
+
+### Wzmacnianie bezpieczeństwa
+
+- Dezynfekcja wejścia
+- Zapobieganie wstrzyknięciu SQL (ORM pomaga)
+- Ochrona CSRF
+- Ograniczenie szybkości na publicznych punktach końcowych
+- Rejestrowanie audytu operacji wrażliwych
+
+### Migracje baz danych
+
+- Wybierz narzędzie migracji (Flyway lub Liquibase)
+- Kontrola wersji zmian schematu
+- Obsługa wycofania
+- Testuj migracje na przejściowości przed produkcją
+
+### Aktualizacje dokumentacji
+
+- Utrzymuj aktualne pliki README
+- Aktualizuj diagramy architektury
+- Dokumentuj punkty końcowe API w Swagger/OpenAPI
+- Utwórz przewodnik rozwiązywania problemów
+- Zarejestruj decyzje zespołu w dzienniku decyzji
+
+---
+
+## Notatki szacowania zadań
+
+Do rozmiaru Trello rozważ:
+
+- **S (Mały)**: 1-2 godziny, pojedynczy plik/komponent, brak zależności
+- **M (Średni)**: 4-8 godzin, 2-3 pliki, jasne wymagania
+- **L (Duży)**: 1-2 dni, wiele komponentów, pewna integracja
+- **XL (Bardzo duży)**: 2+ dni, główna funkcja, wiele podsystemów
+
+Większość zadań powyżej to prawdopodobnie M lub L. Podziel zadania XL na mniejsze przed rozpoczęciem.
+
+---
+
+## Sugerowana kolejność priorytetów dla pierwszego sprintu
+
+1. 1.1 Ustandarzyować terminologię
+2. 1.2 Zdefiniować kontrakt API
+3. 2.1 Dodać zależności bazy danych
+4. 2.2 Stworzyć podstawowe encje domeny
+5. 2.5 Dodać konfigurację bezpieczeństwa
+6. 3.1 Skonfigurować routing
+7. 3.2 Stworzyć kontekst autentykacji
+8. 3.3 Stworzyć klienta API
+9. 2.3 Stworzyć repozytoria
+10. 4.1 Stworzyć przeglądanie drukalni (widok gościa)
