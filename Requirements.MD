@@ -114,6 +114,15 @@ Uwaga: biznesowa rola ADMINISTRATOR pozostaje czescia koncepcji, mimo ze ERD v0 
 - Klient musi dostac informacje, gdy zamowienie jest gotowe do odbioru.
 - Chwilowa niedostepnosc dostawcy e-mail nie moze blokowac obslugi zamowien.
 
+### 4.8 Kontrakt API i diagnostyka
+
+- HTTP status code jest glownym sygnalem wyniku operacji.
+- Odpowiedzi sukcesu zwracaja dane domenowe i metadane (w tym requestId i timestamp).
+- Odpowiedzi bledow musza byc zgodne z Problem Details (`application/problem+json`) i zawierac co najmniej: type, title, status, detail, instance, code, userMessage, action, requestId, traceId, timestamp.
+- API musi wspierac korelacje i tracing przez `traceparent`, `tracestate` i `x-request-id`.
+- Dla wrazliwych operacji POST (np. finansowych) API musi wspierac `Idempotency-Key`.
+- Deprecjacja endpointow i pol API musi byc komunikowana przez naglowki `Deprecation` i `Sunset` oraz przez OpenAPI.
+
 ## 5. Wymagania niefunkcjonalne
 
 ### 5.1 Wydajnosc i skalowanie
@@ -133,6 +142,13 @@ Uwaga: biznesowa rola ADMINISTRATOR pozostaje czescia koncepcji, mimo ze ERD v0 
 - Kazda operacja zmieniajaca dane wymaga waznego JWT.
 - Uprawnienia sa egzekwowane po stronie serwera.
 - Dostep do plikow jest ograniczony do uprawnionych osob.
+
+### 5.4 Obserwowalnosc i operacyjnosc
+
+- Kazde zapytanie API musi byc mozliwe do prześledzenia po requestId i traceId.
+- Logi backendu musza laczyc identyfikatory korelacyjne z bledami i metrykami.
+- Odpowiedzi bledow nie moga ujawniac danych tajnych ani stack trace.
+- System powinien umozliwiac szybka diagnostyke incydentow w architekturze rozproszonej.
 
 ## 6. Architektura docelowa
 

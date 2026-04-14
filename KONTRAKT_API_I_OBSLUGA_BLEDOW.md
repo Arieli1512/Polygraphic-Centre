@@ -2,68 +2,73 @@
 
 ## 1. Cel dokumentu
 
-Ten dokument ustala wspolne zasady dla API backendu:
+Ten dokument definiuje dojrzaly standard API dla projektu:
 
-- jak nazywamy sciezki endpointow,
-- jak wyglada odpowiedz sukcesu,
-- jak wyglada odpowiedz bledu,
-- jakie informacje dostaje uzytkownik i zespol techniczny,
-- jak dokumentujemy API w OpenAPI/Swagger.
+- prosty i przewidywalny dla klienta API,
+- zgodny z praktykami rynkowymi,
+- rozszerzalny bez lamania kompatybilnosci,
+- przyjazny dla uzytkownika koncowego i diagnostyki technicznej.
 
 Dokument jest po polsku, ale nazwy techniczne (endpointy, pola JSON, statusy) sa po angielsku.
 
-## 2. Zasady nazewnictwa REST API (angielski)
+## 2. Zasady ogolne (high-level)
 
-### 2.1 Bazowa konwencja
+1. HTTP status code jest glownym sygnalem powodzenia lub bledu operacji.
+2. Odpowiedzi sukcesu zwracaja dane domenowe i metadane techniczne.
+3. Odpowiedzi bledow sa oparte o RFC Problem Details (`application/problem+json`) z rozszerzeniami domenowymi.
+4. Kazda odpowiedz ma `requestId` (korelacja), a blad dodatkowo `traceId` (diagnostyka rozproszona).
+5. API jest wersjonowane i rozwijane kompatybilnie wstecz.
 
-- Wersjonowanie przez prefiks: /api/v1
-- Nazwy zasobow po angielsku i w liczbie mnogiej: /orders, /printing-points, /clients
-- Kebab-case w segmentach sciezki: /wallet-top-ups, /rate-sheets
-- Operacje na pojedynczym zasobie: /orders/{orderId}
-- Operacje podrzedne: /orders/{orderId}/status-history
-- Brak czasownikow w sciezkach, jesli da sie to wyrazic metoda HTTP
+## 3. Zasady nazewnictwa REST API (angielski)
 
-### 2.2 Metody HTTP
+### 3.1 Konwencja sciezek
 
-- GET: odczyt
-- POST: utworzenie zasobu
-- PUT: pelna podmiana
-- PATCH: czesciowa aktualizacja
-- DELETE: usuniecie lub dezaktywacja
+- Prefiks wersji: `/api/v1`
+- Nazwy zasobow po angielsku i w liczbie mnogiej: `/orders`, `/printing-points`, `/clients`
+- Kebab-case: `/wallet-top-ups`, `/rate-sheets`
+- Pojedynczy zasob: `/orders/{orderId}`
+- Relacje podrzedne: `/printing-points/{printingPointId}/operators`
+- Bez czasownikow w URI (wyjatki tylko dla akcji biznesowych trudnych do modelowania CRUD, np. `/orders/{orderId}/cancel`)
 
-### 2.3 Przykladowe endpointy
+### 3.2 Metody HTTP
 
-- GET /api/v1/printing-points
-- GET /api/v1/printing-points/{printingPointId}
-- GET /api/v1/clients/{clientId}/wallet
-- POST /api/v1/clients/{clientId}/wallet-top-ups
-- GET /api/v1/orders
-- POST /api/v1/orders
-- GET /api/v1/orders/{orderId}
-- PATCH /api/v1/orders/{orderId}
-- POST /api/v1/orders/{orderId}/cancel
-- PATCH /api/v1/orders/{orderId}/status
-- GET /api/v1/printing-points/{printingPointId}/operators
-- GET /api/v1/printing-points/{printingPointId}/rate-sheets
-- POST /api/v1/files/upload-requests
+- `GET`: odczyt
+- `POST`: utworzenie zasobu / akcja biznesowa
+- `PUT`: pelna podmiana
+- `PATCH`: czesciowa aktualizacja
+- `DELETE`: usuniecie/dezaktywacja
 
-## 3. Kontrakt odpowiedzi sukcesu
+### 3.3 Przykladowe endpointy
 
-### 3.1 Wrapper sukcesu
+- `GET /api/v1/printing-points`
+- `GET /api/v1/printing-points/{printingPointId}`
+- `GET /api/v1/clients/{clientId}/wallet`
+- `POST /api/v1/clients/{clientId}/wallet-top-ups`
+- `GET /api/v1/orders`
+- `POST /api/v1/orders`
+- `GET /api/v1/orders/{orderId}`
+- `PATCH /api/v1/orders/{orderId}`
+- `POST /api/v1/orders/{orderId}/cancel`
+- `PATCH /api/v1/orders/{orderId}/status`
+- `POST /api/v1/files/upload-requests`
 
-Kazda odpowiedz sukcesu zwraca wspolny wrapper:
+## 4. Kontrakt odpowiedzi sukcesu
 
-- success: true
-- message: krotka informacja dla uzytkownika
-- data: wlasciwy obiekt lub lista
-- meta: dane pomocnicze (np. paginacja, requestId)
+## 4.1 Zasada
 
-### 3.2 Przyklad sukcesu
+W sukcesie zwracamy dane domenowe i metadane.
+
+### 4.2 Typowe kody HTTP dla sukcesu
+
+- `200 OK`: odczyt lub aktualizacja
+- `201 Created`: utworzenie nowego zasobu
+- `202 Accepted`: operacja asynchroniczna przyjeta do przetworzenia
+- `204 No Content`: sukces bez ciala odpowiedzi
+
+### 4.3 Przyklad sukcesu (`201 Created`)
 
 ```json
 {
-  "success": true,
-  "message": "Zamowienie zostalo utworzone.",
   "data": {
     "orderId": "ord_01JX9YQ4",
     "status": "PENDING",
@@ -76,174 +81,215 @@ Kazda odpowiedz sukcesu zwraca wspolny wrapper:
 }
 ```
 
-## 4. Kontrakt odpowiedzi bledu
-
-### 4.1 Zasady ogolne (best practices)
-
-- Blad ma byc zrozumialy dla uzytkownika nietechnicznego.
-- Odpowiedz ma jasno pokazywac:
-  - co sie stalo,
-  - czego dotyczy problem,
-  - co uzytkownik moze zrobic dalej.
-- Odpowiedz ma zawierac informacje diagnostyczne dla wsparcia (requestId/traceId), ale bez wycieku danych wrazliwych.
-- Uzywamy statusow HTTP zgodnie z semantyka bledu.
-
-### 4.2 Minimalny schemat bledu
-
-- success: false
-- error.code: stabilny kod bledu do obslugi po stronie frontend
-- error.message: krotki opis techniczny
-- error.userMessage: prosty komunikat dla uzytkownika
-- error.target: co dokladnie jest problemem (pole, zasob, operacja)
-- error.action: co uzytkownik ma zrobic dalej
-- error.details: lista szczegolow (np. walidacja pol)
-- error.status: kod HTTP
-- error.path: endpoint
-- error.method: metoda HTTP
-- error.timestamp: czas wystapienia bledu
-- error.requestId: identyfikator do kontaktu z supportem
-- error.traceId: identyfikator techniczny dla logow
-
-### 4.3 Przyklad bledu walidacji (422)
+### 4.4 Przyklad listy z paginacja
 
 ```json
 {
-  "success": false,
-  "error": {
-    "code": "VALIDATION_ERROR",
-    "message": "Validation failed for request body.",
-    "userMessage": "Nie udalo sie zapisac zamowienia, bo czesc danych jest niepoprawna.",
-    "target": "orderRequest",
-    "action": "Popraw oznaczone pola i sprobuj ponownie.",
-    "details": [
-      {
-        "field": "copies",
-        "issue": "must be greater than 0",
-        "userHint": "Podaj liczbe kopii wieksza od zera."
-      },
-      {
-        "field": "pickupAt",
-        "issue": "is not available",
-        "userHint": "Wybierz inny termin odbioru."
-      }
-    ],
-    "status": 422,
-    "path": "/api/v1/orders",
-    "method": "POST",
-    "timestamp": "2026-04-14T11:44:00Z",
-    "requestId": "0f6b6ca8-95af-4e1f-9b0b-3e31f5f49f8e",
-    "traceId": "3e7e26f4d3f498f1"
+  "data": [
+    {
+      "orderId": "ord_01JX9YQ4",
+      "status": "PENDING"
+    },
+    {
+      "orderId": "ord_01JX9YQ5",
+      "status": "READY"
+    }
+  ],
+  "meta": {
+    "requestId": "f3f79480-2d52-41ca-b0f7-f7a9fcf742ae",
+    "page": 0,
+    "size": 20,
+    "totalItems": 2,
+    "totalPages": 1,
+    "timestamp": "2026-04-14T11:50:12Z"
+  },
+  "links": {
+    "self": "/api/v1/orders?page=0&size=20",
+    "next": null,
+    "prev": null
   }
 }
 ```
 
-### 4.4 Przyklad bledu biznesowego (409)
+## 5. Kontrakt odpowiedzi bledu (Problem Details)
+
+### 5.1 Zasada
+
+Format bledu opieramy o `application/problem+json` (RFC Problem Details), rozszerzony o pola domenowe i pola diagnostyczne.
+
+### 5.2 Obowiazkowe pola
+
+- `type`: URI typu bledu (np. `https://api.polygraphic-centre.dev/problems/validation-error`)
+- `title`: krotka nazwa bledu
+- `status`: HTTP status code
+- `detail`: opis techniczny
+- `instance`: URI lub sciezka wystapienia bledu
+- `code`: stabilny kod aplikacyjny (dla frontendu i automatyki)
+- `userMessage`: prosty komunikat dla uzytkownika
+- `action`: wskazowka "co dalej"
+- `requestId`: identyfikator korelacyjny
+- `traceId`: identyfikator sledzenia rozproszonego
+- `timestamp`: czas wystapienia bledu (UTC)
+
+### 5.3 Pola opcjonalne
+
+- `errors`: lista szczegolow walidacji
+- `retryable`: czy blad mozna ponowic automatycznie (`true/false`)
+- `docs`: link do dokumentacji bledu
+
+### 5.4 Przyklad bledu walidacji (`422`)
 
 ```json
 {
-  "success": false,
-  "error": {
-    "code": "ORDER_STATUS_TRANSITION_NOT_ALLOWED",
-    "message": "Order status transition is not allowed.",
-    "userMessage": "Nie mozna wykonac tej zmiany statusu zamowienia.",
-    "target": "order.status",
-    "action": "Odswiez widok zamowienia i sprawdz jego aktualny status.",
-    "details": [
-      {
-        "field": "status",
-        "issue": "transition from READY to APPROVED is forbidden",
-        "userHint": "Skontaktuj sie z obsluga, jesli to wyglada na pomylke."
-      }
-    ],
-    "status": 409,
-    "path": "/api/v1/orders/ord_01JX9YQ4/status",
-    "method": "PATCH",
-    "timestamp": "2026-04-14T11:45:10Z",
-    "requestId": "2c505f98-bbde-45d6-9361-27fefd102c52",
-    "traceId": "31ab5c09f2a0d7cc"
-  }
+  "type": "https://api.polygraphic-centre.dev/problems/validation-error",
+  "title": "Validation Error",
+  "status": 422,
+  "detail": "Validation failed for request body.",
+  "instance": "/api/v1/orders",
+  "code": "VALIDATION_ERROR",
+  "userMessage": "Nie udalo sie zapisac zamowienia, bo czesc danych jest niepoprawna.",
+  "action": "Popraw oznaczone pola i sprobuj ponownie.",
+  "errors": [
+    {
+      "field": "copies",
+      "issue": "must be greater than 0",
+      "userHint": "Podaj liczbe kopii wieksza od zera."
+    },
+    {
+      "field": "pickupAt",
+      "issue": "is not available",
+      "userHint": "Wybierz inny termin odbioru."
+    }
+  ],
+  "retryable": false,
+  "requestId": "0f6b6ca8-95af-4e1f-9b0b-3e31f5f49f8e",
+  "traceId": "3e7e26f4d3f498f1",
+  "timestamp": "2026-04-14T11:44:00Z"
 }
 ```
 
-### 4.5 Przyklad bledu autoryzacji (403)
+### 5.5 Przyklad bledu biznesowego (`409`)
 
 ```json
 {
-  "success": false,
-  "error": {
-    "code": "ACCESS_DENIED",
-    "message": "Access denied for this resource.",
-    "userMessage": "Nie masz uprawnien do wykonania tej operacji.",
-    "target": "orders/{orderId}",
-    "action": "Zaloguj sie na konto z odpowiednia rola lub skontaktuj sie z administratorem.",
-    "details": [],
-    "status": 403,
-    "path": "/api/v1/orders/ord_01JX9YQ4",
-    "method": "GET",
-    "timestamp": "2026-04-14T11:46:01Z",
-    "requestId": "5f8af83f-e11d-4a3b-a786-d5e8f84d53b4",
-    "traceId": "f84e0ca10f503bcc"
-  }
+  "type": "https://api.polygraphic-centre.dev/problems/order-status-transition-not-allowed",
+  "title": "Order Transition Not Allowed",
+  "status": 409,
+  "detail": "Order status transition is not allowed.",
+  "instance": "/api/v1/orders/ord_01JX9YQ4/status",
+  "code": "ORDER_STATUS_TRANSITION_NOT_ALLOWED",
+  "userMessage": "Nie mozna wykonac tej zmiany statusu zamowienia.",
+  "action": "Odswiez widok zamowienia i sprawdz jego aktualny status.",
+  "errors": [
+    {
+      "field": "status",
+      "issue": "transition from READY to APPROVED is forbidden",
+      "userHint": "Skontaktuj sie z obsluga, jesli to wyglada na pomylke."
+    }
+  ],
+  "retryable": false,
+  "requestId": "2c505f98-bbde-45d6-9361-27fefd102c52",
+  "traceId": "31ab5c09f2a0d7cc",
+  "timestamp": "2026-04-14T11:45:10Z"
 }
 ```
 
-## 5. Mapa kodow HTTP i kodow aplikacyjnych
+### 5.6 Przyklad bledu autoryzacji (`403`)
 
-### 5.1 Statusy HTTP
+```json
+{
+  "type": "https://api.polygraphic-centre.dev/problems/access-denied",
+  "title": "Access Denied",
+  "status": 403,
+  "detail": "Access denied for this resource.",
+  "instance": "/api/v1/orders/ord_01JX9YQ4",
+  "code": "ACCESS_DENIED",
+  "userMessage": "Nie masz uprawnien do wykonania tej operacji.",
+  "action": "Zaloguj sie na konto z odpowiednia rola lub skontaktuj sie z administratorem.",
+  "retryable": false,
+  "requestId": "5f8af83f-e11d-4a3b-a786-d5e8f84d53b4",
+  "traceId": "f84e0ca10f503bcc",
+  "timestamp": "2026-04-14T11:46:01Z"
+}
+```
 
-- 400 Bad Request: niepoprawna skladnia lub brak wymaganych danych
-- 401 Unauthorized: brak waznego tokenu
-- 403 Forbidden: brak uprawnienia
-- 404 Not Found: zasob nie istnieje
-- 409 Conflict: konflikt stanu biznesowego
-- 422 Unprocessable Entity: blad walidacji danych
-- 429 Too Many Requests: przekroczony limit zapytan
-- 500 Internal Server Error: blad nieoczekiwany
-- 503 Service Unavailable: chwilowa niedostepnosc uslugi zewnetrznej
+## 6. HTTP status + kody aplikacyjne
 
-### 5.2 Przykladowe kody aplikacyjne
+### 6.1 Mapa statusow HTTP
 
-- VALIDATION_ERROR
-- RESOURCE_NOT_FOUND
-- ACCESS_DENIED
-- AUTH_TOKEN_INVALID
-- AUTH_TOKEN_EXPIRED
-- ORDER_STATUS_TRANSITION_NOT_ALLOWED
-- PICKUP_TIME_UNAVAILABLE
-- FILE_UPLOAD_NOT_ALLOWED
-- EXTERNAL_SERVICE_UNAVAILABLE
-- INTERNAL_ERROR
+- `400 Bad Request`: niepoprawna skladnia / brak wymaganych danych
+- `401 Unauthorized`: brak waznego tokenu
+- `403 Forbidden`: brak uprawnien
+- `404 Not Found`: zasob nie istnieje
+- `409 Conflict`: konflikt stanu biznesowego
+- `422 Unprocessable Entity`: blad walidacji
+- `429 Too Many Requests`: limit zapytan przekroczony
+- `500 Internal Server Error`: blad nieoczekiwany
+- `503 Service Unavailable`: chwilowa niedostepnosc uslugi zewnetrznej
 
-## 6. Reguly bezpieczenstwa dla bledow
+### 6.2 Przykladowe kody aplikacyjne
 
-- Nie zwracamy stack trace do klienta.
-- Nie zwracamy danych tajnych (tokeny, sekrety, hasla, klucze).
-- Szczegoly techniczne trafiaja do logow po stronie serwera.
-- requestId i traceId musza byc obecne we wszystkich odpowiedziach bledow.
+- `VALIDATION_ERROR`
+- `RESOURCE_NOT_FOUND`
+- `ACCESS_DENIED`
+- `AUTH_TOKEN_INVALID`
+- `AUTH_TOKEN_EXPIRED`
+- `ORDER_STATUS_TRANSITION_NOT_ALLOWED`
+- `PICKUP_TIME_UNAVAILABLE`
+- `FILE_UPLOAD_NOT_ALLOWED`
+- `EXTERNAL_SERVICE_UNAVAILABLE`
+- `INTERNAL_ERROR`
 
-## 7. Kontrakt paginacji i filtrowania (zalecany)
+## 7. Observability, tracing i korelacja
 
-Dla list uzywamy:
+### 7.1 Naglowki przychodzace i wychodzace
 
-- query params: page, size, sort
-- meta.page: numer strony
-- meta.size: rozmiar strony
-- meta.totalItems: liczba rekordow
-- meta.totalPages: liczba stron
+- `traceparent` (W3C Trace Context) - preferowany
+- `tracestate` (opcjonalnie)
+- `x-request-id` (fallback i korelacja biznesowa)
 
-Przyklad:
+### 7.2 Zasady
 
-- GET /api/v1/orders?page=0&size=20&sort=createdAt,desc
+- Jesli klient przesle `x-request-id`, backend go propaguje.
+- Jesli brak identyfikatora, backend generuje `requestId`.
+- `traceId` powinno byc zgodne z aktywnym spanem trace.
+- `requestId` i `traceId` trafiaja do logow, metryk i odpowiedzi bledow.
 
-## 8. Szkielet OpenAPI/Swagger
+## 8. Bezpieczenstwo i prywatnosc odpowiedzi
+
+- Brak stack trace i danych wewnetrznych w odpowiedziach dla klienta.
+- Brak ujawniania sekretow, tokenow, hasel i kluczy.
+- Komunikaty dla uzytkownika sa zrozumiale, ale nie zdradzaja wrazliwych szczegolow.
+- Pelnie techniczne detale sa dostepne tylko w logach serwera.
+
+## 9. Kompatybilnosc i ewolucja kontraktu
+
+### 9.1 Zasady kompatybilnosci
+
+- Nie usuwamy pol bez deprecjacji.
+- Nowe pola dodajemy jako opcjonalne.
+- Zmiany niekompatybilne robimy w nowej wersji (`/api/v2`).
+
+### 9.2 Deprecation policy
+
+- Oznaczamy pola/endpointy jako deprecated w OpenAPI.
+- Uzywamy naglowkow `Deprecation` i `Sunset` dla konca wsparcia.
+- Zapewniamy okres przejsciowy i komunikat migracyjny.
+
+### 9.3 Idempotencja i retry
+
+- Dla wrazliwych `POST` (np. finansowych) wymagamy `Idempotency-Key`.
+- Odpowiedz bledu moze zawierac `retryable=true`, jesli bezpieczne jest ponowienie.
+
+## 10. OpenAPI/Swagger - minimalny szkic
 
 Minimalny zestaw do wdrozenia:
 
-- OpenAPI 3.1
-- Jedno wspolne schema: ApiSuccessResponse
-- Jedno wspolne schema: ApiErrorResponse
-- Components/schemas dla glownej domeny (Order, PrintingPoint, Wallet, RateSheet, PrintSettings)
-- Reuzywalne odpowiedzi bledu dla 400/401/403/404/409/422/500
+- OpenAPI `3.1`
+- `ApiDataResponse` (sukces)
+- `ProblemDetails` (blad)
+- `ValidationProblemDetails` (blad walidacji)
+- Reuzywalne odpowiedzi dla `400/401/403/404/409/422/429/500/503`
 
 Przykladowy szkic:
 
@@ -264,30 +310,42 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ApiSuccessResponse'
+                $ref: '#/components/schemas/ApiDataResponse'
         '422':
-          $ref: '#/components/responses/ValidationError'
+          description: Validation error
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ValidationProblemDetails'
 components:
-  responses:
-    ValidationError:
-      description: Validation error
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ApiErrorResponse'
   schemas:
-    ApiSuccessResponse:
+    ApiDataResponse:
       type: object
-    ApiErrorResponse:
+      properties:
+        data:
+          type: object
+        meta:
+          type: object
+    ProblemDetails:
       type: object
+      required: [type, title, status, detail, instance, code, userMessage, action, requestId, traceId, timestamp]
+    ValidationProblemDetails:
+      allOf:
+        - $ref: '#/components/schemas/ProblemDetails'
+        - type: object
+          properties:
+            errors:
+              type: array
+              items:
+                type: object
 ```
 
-## 9. Definicja ukonczenia zadania 1.2
+## 11. Definicja ukonczenia zadania 1.2
 
 Zadanie 1.2 uznajemy za ukonczone, gdy:
 
-- sciezki API sa nazwane po angielsku i zgodnie z REST,
-- frontend i backend korzystaja z jednego schematu sukcesu,
-- frontend i backend korzystaja z jednego schematu bledu,
-- kazdy blad ma informacje: co sie stalo, czego dotyczy i co dalej,
-- istnieje dzialajaca dokumentacja OpenAPI ze schematami odpowiedzi.
+- endpointy sa nazwane po angielsku i zgodnie z REST,
+- HTTP status jest glownym sygnalem wyniku operacji,
+- bledy sa zgodne z Problem Details i zawieraja informacje: co sie stalo, czego dotyczy i co dalej,
+- tracing i korelacja (`requestId`, `traceId`, `traceparent`) sa wspierane,
+- dokumentacja OpenAPI zawiera schematy sukcesu i bledu oraz odpowiedzi reuzywalne.

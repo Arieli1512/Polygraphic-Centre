@@ -107,6 +107,13 @@ Lista obejmuje encje zaprojektowane obecnie w ERD:
 - Zamowienie (Order): glowny rekord zlecenia klienta.
 - Ustawienia druku (PrintSettings): parametry wydruku zamowienia.
 - Wydruk (Printout): zapis wykonania wydruku przez operatora.
+- Problem Details: standardowy format odpowiedzi bledu API (`application/problem+json`).
+- requestId: identyfikator korelacyjny zapytania, przydatny dla wsparcia i logow.
+- traceId: identyfikator sledzenia rozproszonego wykorzystywany w observability.
+- traceparent/tracestate: naglowki W3C Trace Context dla propagacji sledzenia.
+- x-request-id: naglowek korelacyjny klienta (fallback lub zrodlo requestId).
+- Idempotency-Key: naglowek zapobiegajacy podwojnemu wykonaniu wrazliwych operacji POST.
+- Deprecation/Sunset: naglowki informujace o wygaszaniu endpointow i planowanej dacie zakonczenia wsparcia.
 
 ## 7. Minimalne zasady spojnosc dokumentacji
 

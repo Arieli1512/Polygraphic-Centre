@@ -22,10 +22,15 @@ Wynik zadania:
 
 - Ustandaryzować konwencje ścieżek REST API
 - Zdefiniować schemat odpowiedzi błędu (kod, wiadomość, szczegóły)
-- Zdefiniować strukturę wrappera odpowiedzi sukcesu
+- Zdefiniować strukturę odpowiedzi sukcesu opartą o dane domenowe i metadane
 - Stworzyć szkielet OpenAPI/Swagger
 - Upewnić się, że ścieżki API są po angielsku i spójne z modelem domeny
 - Zaprojektować komunikaty błędów tak, aby użytkownik wiedział: co się stało, czego dotyczy problem i co zrobić dalej
+- Przyjąć HTTP status code jako główny sygnał wyniku operacji
+- Przyjąć format błędów Problem Details (`application/problem+json`) z polami diagnostycznymi
+- Ustalić obsługę tracingu i korelacji (`traceparent`, `tracestate`, `x-request-id`, `requestId`, `traceId`)
+- Ustalić politykę idempotencji (`Idempotency-Key`) dla wrażliwych operacji
+- Ustalić politykę deprecjacji API (`Deprecation`, `Sunset`)
 
 Wynik zadania:
 
@@ -107,6 +112,8 @@ Uwaga: to jest model wersji roboczej v0 oparty o erDiagram.mmd i punkt wyjścia 
 - Niestandardowe klasy wyjątków
 - Walidacja wejścia za pomocą Bean Validation (JSR-380)
 - Ustandaryzowany formatter odpowiedzi błędu
+- Zgodność odpowiedzi błędów z Problem Details
+- Dodanie kodów aplikacyjnych i identyfikatorów requestId/traceId do błędów
 
 ### 2.5 Dodać integrację Spring Security i Firebase JWT
 
@@ -123,12 +130,15 @@ Uwaga: to jest model wersji roboczej v0 oparty o erDiagram.mmd i punkt wyjścia 
 - application-prod.properties
 - Fasole ConfigurationProperties do konfiguracji zewnętrznej
 - Konfiguracja rejestrowania (SLF4J)
+- Konfiguracja propagacji trace context i logowania korelacyjnego
 
 ### 2.7 Dodać dokumentację OpenAPI/Swagger
 
 - Zależność springdoc-openapi
 - Konfiguracja Swagger UI
 - Dokumentować główne punkty końcowe w miarę ich tworzenia
+- Reużywalne schematy `ProblemDetails` i `ValidationProblemDetails`
+- Oznaczanie deprecjacji endpointów i pól
 
 ### 2.8 Stworzyć szkielety warstwy usług
 
@@ -165,6 +175,8 @@ Uwaga: to jest model wersji roboczej v0 oparty o erDiagram.mmd i punkt wyjścia 
 - Obsługa błędów i odświeżenie tokenu przy 401
 - Konfiguracja adresu URL backendu na podstawie środowiska
 - Definicje typów dla typowych odpowiedzi API
+- Obsługa `application/problem+json` i mapowanie kodów błędów na komunikaty UI
+- Propagacja `x-request-id` i obsługa błędów z requestId/traceId
 
 ### 3.4 Stworzyć wzorce formularzy i walidację
 
@@ -408,6 +420,8 @@ Uwaga: to jest model wersji roboczej v0 oparty o erDiagram.mmd i punkt wyjścia 
 - Punkty końcowe API testowego (autentykacja, autoryzacja, ścieżka szczęścia, przypadki błędów)
 - Warstwa usług testowych z bazą danych
 - Wycofywanie transakcji testowej przy naruszeniach ograniczeń
+- Testy kontraktu Problem Details dla kluczowych błędów HTTP
+- Testy propagacji requestId/traceId i idempotencji operacji wrażliwych
 
 ### 8.3 Dodać testy komponentów frontendu
 
