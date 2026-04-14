@@ -10,6 +10,13 @@ Niniejszy plik zawiera zadania wyodrębnione z planu wdrażania. Każde zadanie 
 - Udokumentować automat stanów cyklu życia zamówienia
 - Stworzyć słownik terminów biznesowych do wspólnego użytku
 - Zaktualizować całą dokumentację projektu za pomocą spójnej terminologii
+- Opisać pojęcia prostym językiem zrozumiałym dla osób nietechnicznych
+- Sprawdzić, czy dokumentacja obejmuje wszystkich aktorów i encje wskazane w planie
+
+Wynik zadania:
+
+- Główny dokument wymagań po polsku: [Requirements.MD](Requirements.MD)
+- Kanoniczny słownik i model domeny: [SLOWNIK_I_MODEL_DOMENY.md](SLOWNIK_I_MODEL_DOMENY.md)
 
 ### 1.2 Zdefiniować kontrakt API i format błędów
 
@@ -17,6 +24,12 @@ Niniejszy plik zawiera zadania wyodrębnione z planu wdrażania. Każde zadanie 
 - Zdefiniować schemat odpowiedzi błędu (kod, wiadomość, szczegóły)
 - Zdefiniować strukturę wrappera odpowiedzi sukcesu
 - Stworzyć szkielet OpenAPI/Swagger
+- Upewnić się, że ścieżki API są po angielsku i spójne z modelem domeny
+- Zaprojektować komunikaty błędów tak, aby użytkownik wiedział: co się stało, czego dotyczy problem i co zrobić dalej
+
+Wynik zadania:
+
+- Standard kontraktu API i błędów: [KONTRAKT_API_I_OBSLUGA_BLEDOW.md](KONTRAKT_API_I_OBSLUGA_BLEDOW.md)
 
 ### 1.3 Ustanowić strukturę projektu i konwencje nazewnictwa
 
@@ -60,26 +73,33 @@ Niniejszy plik zawiera zadania wyodrębnione z planu wdrażania. Każde zadanie 
 
 ### 2.2 Stworzyć podstawowe encje domeny
 
-- User (generyczna, z informacją o pod-roli)
-- PrintShop
-- PrintOption (typ, tryb kolorów, format)
-- PricingRule
-- PickupSlot
+- Client
+- Wallet
+- WalletTopUp
+- PrintingPoint
+- OpeningHours
+- Operator (rola: ADMIN lub EMPLOYEE)
+- RateSheet
+- ExtraPricing
 - Order
-- OrderItem
-- Balance / ClientBalance
-- Notification (dziennik oczekujących/wysłanych)
+- PrintSettings
+- Printout
+
+Uwaga: to jest model wersji roboczej v0 oparty o erDiagram.mmd i punkt wyjścia do dalszej ewolucji.
 
 ### 2.3 Stworzyć repozytoria Spring Data
 
-- UserRepository
-- PrintShopRepository
-- PrintOptionRepository
-- PricingRuleRepository
-- PickupSlotRepository
+- ClientRepository
+- WalletRepository
+- WalletTopUpRepository
+- PrintingPointRepository
+- OpeningHoursRepository
+- OperatorRepository
+- RateSheetRepository
+- ExtraPricingRepository
 - OrderRepository
-- OrderItemRepository
-- BalanceRepository
+- PrintSettingsRepository
+- PrintoutRepository
 
 ### 2.4 Dodać walidację i obsługę błędów
 

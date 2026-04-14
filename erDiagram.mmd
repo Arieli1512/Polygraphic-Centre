@@ -1,0 +1,114 @@
+erDiagram
+
+  Client {
+    int client_id PK
+    string email
+    string firebase_uid
+    string first_name
+    string last_name
+    string status "ACTIVE | BLOCKED"
+    timestamp created_at
+    timestamp updated_at
+  }
+
+  Wallet {
+    int client_id PK, FK
+    decimal balance
+    timestamp updated_at
+    string status "ACTIVE | BLOCKED | CLOSED"
+  }
+
+  WalletTopUp {
+    int top_up_id PK
+    int client_id FK
+    decimal amount
+    timestamp created_at
+  }
+
+  PrintingPoint {
+    int printing_point_id PK
+    string name
+    string street_address
+    string city
+    string postal_code
+    string country
+  }
+
+  OpeningHours {
+    int printing_point_id PK
+    int day_of_week PK "1-7"
+    time start_time
+    time end_time
+  }
+
+  Operator {
+    int operator_id PK
+    int printing_point_id FK
+    string firebase_uid
+    string email
+    string employee_number
+    string role "ADMIN | EMPLOYEE"
+    string status "ACTIVE | BLOCKED"
+    timestamp created_at
+    timestamp updated_at
+  }
+
+  RateSheet {
+    int printing_point_id PK, FK
+    string paper_type PK "standardowy | błyszczący | ..."
+    string format PK "a3 | a4 | a5 | ..."
+    decimal page_price
+  }
+
+  ExtraPricing {
+    int printing_point_id PK, FK
+    decimal binding_price
+    decimal stapling_price
+    decimal cover_price
+  }
+
+  Order {
+    int order_id PK
+    int printing_point_id FK
+    int client_id FK
+    string file_path "ścieżka do pliku w magazynie plików"
+    int page_count "liczba stron w pliku"
+    decimal total_price "zamrożona cena na moment ostatniej aktualizacji klienta"
+    timestamp pickup_at "wybrana godzina odbioru"
+    string status "PENDING | APPROVED | READY | DISPENSED | CANCELLED"
+    timestamp created_at
+    timestamp updated_at
+  }
+
+  PrintSettings {
+    int order_id PK, FK
+    string format "a3 | a4 | a5 | ..."
+    string paper_type "standardowy | błyszczący | matowy | kredowy | ..."
+    string color_mode "COLOR | GRAYSCALE"
+    string duplex "SINGLE_SIDED | DOUBLE_SIDED"
+    string orientation "PORTRAIT | LANDSCAPE"
+    string finishing "NONE | BINDING | STAPLING | COVER"
+    int copies "liczba egzemplarzy"
+  }
+
+  Printout {
+    int order_id PK, FK
+    int operator_id FK
+    timestamp printed_at
+  }
+
+  Client ||--|| Wallet : owns
+  Wallet ||--o{ WalletTopUp : receives
+
+  PrintingPoint ||--o{ OpeningHours : defines
+  PrintingPoint ||--o{ Order : fulfills
+  PrintingPoint ||--o{ Operator : employs
+
+  PrintingPoint ||--o{ RateSheet : offers
+  PrintingPoint ||--|| ExtraPricing : applies
+
+  Client ||--o{ Order : places
+  Order ||--|| PrintSettings : specifies
+
+  Order ||--o| Printout : results_in
+  Operator ||--o{ Printout : produces

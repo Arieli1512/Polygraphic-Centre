@@ -1,380 +1,357 @@
-# Polygraphic Centre - Requirements and Development Guide
+# Polygraphic Centre - Wymagania i przewodnik rozwoju
 
-## 1. Project Overview
+## 1. Opis projektu
 
-Polygraphic Centre is a web-based client-server system for managing print orders, files, pickup times, pricing, notifications, and staff workflows for one or more print shops.
+Polygraphic Centre to system internetowy (frontend + backend) do obslugi zamowien drukarskich.
 
-The project is intended to replace manual and fragmented order intake methods such as e-mail and physical media. The system uses a React frontend and a Spring Boot backend, with PostgreSQL for persistent data, Google Cloud Storage for file storage, Firebase Authentication for identity, and Google Pub/Sub for asynchronous event handling.
+System ma zastapic obecny, rozproszony proces przyjmowania zlecen (e-mail, nosniki fizyczne, rozmowy telefoniczne).
 
-## 2. Goals
+W praktyce oznacza to jedno miejsce, w ktorym:
 
-- Provide a simple and reliable ordering flow for clients.
-- Give print shop staff a fast operational dashboard.
-- Allow shop managers to configure prices, opening hours, and capacity limits.
-- Allow system administrators to manage shops, users, and global operations.
-- Keep file uploads and notifications resilient by using cloud storage and asynchronous messaging.
-- Make the system testable, deployable, and maintainable by a small team.
+- klient wysyla plik i sklada zamowienie,
+- pracownik drukarni realizuje zlecenie,
+- menedzer ustawia ceny i dostepnosc,
+- administrator zarzadza sklepami i personelem.
 
-## 3. Roles and Access Model
+Docelowy stos technologiczny:
 
-The requirements documents use different labels for similar roles. For implementation, the project should standardize the following roles:
+- frontend: React,
+- backend: Spring Boot,
+- baza danych: PostgreSQL,
+- przechowywanie plikow: Google Cloud Storage,
+- logowanie i tozsamosc: Firebase Authentication,
+- komunikacja asynchroniczna: Google Pub/Sub.
 
-- Guest: can browse print shops and estimate prices, but cannot place an order.
-- Client: can register, log in, upload files, place orders, track orders, and cancel orders before processing starts.
-- Worker / Operator: can view assigned orders, download files, update order status, and mark problematic orders.
-- Manager: can manage pricing, opening hours, print options, and capacity rules for a print shop.
-- Administrator: can manage print shops, staff accounts, and global system configuration.
+## 2. Cele biznesowe
 
-Access rules:
+- Uproscic skladanie zamowien przez klientow.
+- Przyspieszyc codzienna prace drukarni.
+- Dac menedzerom mozliwosc szybkiej zmiany cen i godzin pracy.
+- Dac administratorom kontrole nad sklepami i kontami personelu.
+- Zapewnic odpornosc na chwilowe awarie uslug zewnetrznych (np. e-mail).
+- Utrzymac rozwiazanie tak, aby maly zespol mogl je rozwijac i utrzymywac.
 
-- Clients can only access their own orders and files.
-- Privileged staff can access operational data only within their authorized scope.
-- Administrative functions require explicit authorization.
+## 3. Role i zasady dostepu
 
-## 4. Functional Requirements
+W wersji roboczej v0 (zgodnej z erDiagram.mmd) obowiazuje nastepujacy model aktorow:
 
-### 4.1 Identity and Access
+- GOSC: moze przegladac punkty druku i szacowac koszt, ale nie moze zlozyc zamowienia.
+- KLIENT (Client): ma konto klienta i moze skladac zamowienia.
+- OPERATOR (Operator): personel punktu druku.
+  - EMPLOYEE: obsluga zamowien operacyjnych.
+  - ADMIN: rozszerzone uprawnienia dla punktu druku.
 
-- Registration and login must use Firebase Authentication.
-- JWT token claims must be used to determine user role and permissions.
-- Unauthorized access must be blocked and handled with clear error responses.
-- Ownership checks must prevent access to orders that do not belong to the current user.
+Role biznesowe, ktore nadal obowiazuja w koncepcji produktu:
 
-### 4.2 Guest Functions
+- MENEDZER_PUNKTU: odpowiada za cennik, godziny otwarcia i konfiguracje punktu.
+- ADMINISTRATOR: odpowiada za nadzor globalny nad platforma.
 
-- Guests can view available print shops and locations without logging in.
-- Guests can estimate print costs before creating an account.
-- Guests must be redirected to login or registration when they try to finalize an order.
+W implementacji v0 role te sa mapowane tak:
 
-### 4.3 Client Functions
+- MENEDZER_PUNKTU -> OPERATOR z rola ADMIN.
+- ADMINISTRATOR -> zakres docelowy, tymczasowo poza ERD v0.
 
-- Clients can upload supported document formats to cloud storage.
-- Clients can choose print parameters such as color, format, number of copies, and page range.
-- Clients can select a pickup time from available slots.
-- Clients can see the order cost before confirmation.
-- Clients can view order history.
-- Clients can modify or cancel an order until the shop accepts it.
-- Clients must be informed when an order becomes ready for pickup.
+Najwazniejsze zasady uprawnien:
 
-### 4.4 Worker Functions
+- Klient widzi tylko swoje zamowienia i swoj portfel.
+- Operator dziala tylko w zakresie przypisanego punktu druku.
+- Operacje administracyjne punktu druku wymagaja roli OPERATOR = ADMIN.
+- Kazda operacja zmieniajaca dane musi byc autoryzowana po stronie backendu.
 
-- Workers can view active orders sorted by pickup time.
-- Workers can download uploaded source files.
-- Workers can change order status to in progress, ready, or collected.
-- Workers can mark a damaged file or problematic order and trigger a client notification.
+## 4. Wymagania funkcjonalne
 
-### 4.5 Manager Functions
+### 4.1 Logowanie i autoryzacja
 
-- Managers can edit pricing and opening hours for their shop.
-- Managers can define capacity limits for time slots.
-- Managers can configure available print types and pickup availability.
+- Rejestracja i logowanie dzialaja przez Firebase Authentication.
+- Token JWT przekazuje informacje potrzebne do identyfikacji uzytkownika.
+- Backend zawsze weryfikuje role i zakres dostepu.
+- Dla danych klienta obowiazuje kontrola wlasciciela (ownership check).
 
-### 4.6 Administrator Functions
+### 4.2 Funkcje goscia
 
-- Administrators can add print shops to the system.
-- Administrators can manage staff accounts and permissions.
-- Administrators can generate daily and monthly reports.
-- Administrators can monitor platform health and operational integrity.
+- Przeglad listy drukarni i ich lokalizacji bez logowania.
+- Szacowanie ceny wydruku bez zakladania konta.
+- Proba finalizacji zamowienia bez logowania konczy sie przekierowaniem do logowania/rejestracji.
 
-### 4.7 Notifications and Events
+### 4.3 Funkcje klienta
 
-- The system must notify the print shop when a file has been uploaded.
-- The system must notify the client when order status changes.
-- The system must notify the client when the order is ready for pickup.
-- Messaging must continue to work even if the e-mail provider is temporarily unavailable.
+- Wysylanie obslugiwanych plikow do chmury.
+- Wybor parametrow wydruku (PrintSettings): kolor, format, duplex, orientacja, wykonczenie, liczba kopii.
+- Wybor terminu odbioru (pole pickup_at).
+- Podglad kosztu przed zatwierdzeniem zamowienia.
+- Podglad historii zamowien.
+- Edycja lub anulowanie zamowienia zgodnie z zasadami statusow v0.
+- Otrzymywanie informacji o zmianie statusu i gotowosci do odbioru.
+- Podglad i doladowanie portfela (Wallet, WalletTopUp).
 
-## 5. Nonfunctional Requirements
+### 4.4 Funkcje operatora
 
-### 5.1 Performance and Scalability
+- Podglad aktywnych zamowien, domyslnie posortowanych po czasie odbioru.
+- Pobieranie plikow klienta do realizacji.
+- Zmiana statusu zamowienia zgodnie z v0: PENDING -> APPROVED -> READY -> DISPENSED oraz sciezki anulowania.
+- Rejestracja wykonania wydruku (Printout).
 
-- API CRUD responses should usually stay under 500 ms for 95 percent of cases, excluding file transfer time.
-- Large file uploads must not block the main backend request path.
-- The system should scale through cloud services and asynchronous processing.
+### 4.5 Funkcje operatora z rola ADMIN
 
-### 5.2 Reliability
+- Ustalanie i zmiana cennika stron (RateSheet).
+- Ustalanie doplat dodatkowych (ExtraPricing).
+- Ustalanie godzin otwarcia i dostepnych godzin odbioru.
+- Zarzadzanie operatorami punktu druku.
 
-- Financial or balance-related operations must remain transactional.
-- If e-mail delivery fails, the order flow must continue and messages must be retried.
-- The system must not lose order data if a downstream service is temporarily unavailable.
+Ten zakres odpowiada biznesowej roli MENEDZER_PUNKTU w wersji v0.
 
-### 5.3 Security
+### 4.6 Funkcje administracyjne (zakres docelowy)
 
-- All state-changing operations must require a valid JWT.
-- Role claims must be enforced server-side.
-- File access must be limited to authorized users only.
+- Zakres globalnego administratora pozostaje celem docelowym.
+- W wersji v0 funkcje administracyjne realizowane sa glownie przez OPERATOR = ADMIN w ramach punktu druku.
 
-## 6. Target Architecture
+Uwaga: biznesowa rola ADMINISTRATOR pozostaje czescia koncepcji, mimo ze ERD v0 nie ma jeszcze osobnej encji globalnego administratora.
 
-The project should follow this high-level structure:
+### 4.7 Powiadomienia i zdarzenia
 
-- Frontend: React SPA.
-- Backend: Spring Boot REST API.
-- Database: PostgreSQL.
-- File storage: Google Cloud Storage.
-- Messaging: Google Pub/Sub.
-- Authentication: Firebase Authentication.
-- Notification processing: separate worker or lightweight service.
+- Drukarnia musi otrzymac informacje o nowym pliku i nowym zamowieniu.
+- Klient musi otrzymywac informacje o zmianie statusu zamowienia.
+- Klient musi dostac informacje, gdy zamowienie jest gotowe do odbioru.
+- Chwilowa niedostepnosc dostawcy e-mail nie moze blokowac obslugi zamowien.
 
-The preferred file upload flow is direct-to-cloud storage using signed upload URLs so the backend does not become the bottleneck.
+## 5. Wymagania niefunkcjonalne
 
-## 7. Implementation Roadmap
+### 5.1 Wydajnosc i skalowanie
 
-This roadmap is organized so each phase can be split further into subtasks.
+- Dla typowych operacji CRUD API powinno odpowiadac ponizej 500 ms w 95% przypadkow (bez czasu przesylu duzego pliku).
+- Wysylanie duzych plikow nie moze blokowac glownej sciezki backendu.
+- Rozwiazanie powinno skalowac sie przez uslugi chmurowe i komunikacje asynchroniczna.
 
-### Phase 1: Foundations
+### 5.2 Niezawodnosc
 
-- Normalize the business vocabulary and canonical role model.
-- Define the order lifecycle and main business rules.
-- Define the API style and error response format.
-- Establish project conventions for naming, package layout, and configuration.
-- Prepare environment documentation for the whole team.
+- Operacje finansowe i saldo musza byc transakcyjne.
+- Gdy wysylka e-mail sie nie powiedzie, proces zamowienia ma dzialac dalej, a wiadomosc ma trafic do ponowienia.
+- System nie moze tracic danych zamowien przy chwilowych awariach uslug zewnetrznych.
 
-### Phase 2: Backend Foundation
+### 5.3 Bezpieczenstwo
 
-- Add persistence and database integration.
-- Add core entities, repositories, and service layer structure.
-- Add validation and global error handling.
-- Add security setup and token verification.
-- Add OpenAPI or similar API documentation.
+- Kazda operacja zmieniajaca dane wymaga waznego JWT.
+- Uprawnienia sa egzekwowane po stronie serwera.
+- Dostep do plikow jest ograniczony do uprawnionych osob.
 
-### Phase 3: Frontend Foundation
+## 6. Architektura docelowa
 
-- Replace the starter app with the real application shell.
-- Add routing and page structure.
-- Add authentication state handling.
-- Add a reusable API client layer.
-- Add form patterns and validation.
+System sklada sie z nastepujacych elementow:
 
-### Phase 4: Core Client Flow
+- frontend (React SPA),
+- backend (Spring Boot REST API),
+- baza danych PostgreSQL,
+- magazyn plikow w Google Cloud Storage,
+- kolejki zdarzen w Google Pub/Sub,
+- uwierzytelnianie przez Firebase Authentication,
+- lekki worker/usluga do przetwarzania powiadomien.
 
-- Add print shop browsing.
-- Add order creation and cost estimation.
-- Add supported file upload flow.
-- Add order history and order update/cancel rules.
+Preferowany model wysylki pliku:
 
-### Phase 5: Staff Operations
+- frontend pobiera podpisany URL z backendu,
+- plik trafia bezposrednio do storage,
+- backend zapisuje metadane pliku i laczy je z zamowieniem.
 
-- Add order queue views.
-- Add sorting and filtering by pickup time.
-- Add order detail and file download support.
-- Add status updates and problem handling.
+## 7. Plan wdrozenia
 
-### Phase 6: Configuration and Administration
+### Faza 1: Fundamenty
 
-- Add shop configuration screens.
-- Add pricing, capacity, and availability management.
-- Add staff and shop administration.
-- Add report generation and export.
+- Ujednolicenie slownictwa i modelu rol.
+- Definicja cyklu zycia zamowienia i podstawowych zasad biznesowych.
+- Ustalenie stylu API i formatu bledow.
+- Ustalenie konwencji projektu (nazewnictwo, struktura, konfiguracja).
+- Przygotowanie dokumentacji srodowisk dla calego zespolu.
 
-### Phase 7: Messaging and Notifications
+### Faza 2: Fundament backendu
 
-- Add event publishing for important order changes.
-- Add asynchronous e-mail notifications.
-- Add retry and dead-letter behavior.
+- Integracja bazy danych i warstwy trwalosci.
+- Dodanie encji, repozytoriow i warstwy serwisowej.
+- Dodanie walidacji i globalnej obslugi bledow.
+- Dodanie bezpieczenstwa i weryfikacji tokenu.
+- Dodanie dokumentacji API (OpenAPI/Swagger).
 
-### Phase 8: Quality and Release Readiness
+### Faza 3: Fundament frontendu
 
-- Add unit, integration, and end-to-end tests.
-- Add linting and formatting checks.
-- Add deployment configuration and release checklists.
-- Add backup, monitoring, and recovery guidance.
+- Zastapienie aplikacji startowej docelowa powloka.
+- Dodanie routingu i struktury stron.
+- Dodanie obslugi stanu autoryzacji.
+- Dodanie wspolnego klienta API.
+- Dodanie wspolnych wzorcow formularzy i walidacji.
 
-## 8. Team Work Breakdown
+### Faza 4: Glowny przeplyw klienta
 
-The project has five contributors, so the work should be divided into five streams that can be further split when needed.
+- Przegladanie drukarni.
+- Szacowanie kosztu i tworzenie zamowienia.
+- Wysylka plikow.
+- Historia i modyfikacja zamowien.
 
-1. Backend platform and data layer.
-   - Database schema.
-   - Entities, repositories, services.
-   - Validation and business rules.
+### Faza 5: Operacje personelu
 
-2. Authentication and security.
-   - Firebase integration.
-   - JWT validation.
-   - Role and ownership checks.
+- Kolejka zamowien.
+- Sortowanie i filtrowanie.
+- Szczegoly zamowienia i pobieranie pliku.
+- Zmiany statusu i obsluga problemow.
 
-3. Client-facing frontend.
-   - Public browsing.
-   - Client order flow.
-   - File upload and order history screens.
+### Faza 6: Konfiguracja i administracja
 
-4. Staff and admin frontend.
-   - Queue dashboard.
-   - Order detail views.
-   - Manager and administrator configuration views.
+- Ekrany konfiguracji drukarni.
+- Zarzadzanie cennikiem, pojemnoscia i dostepnoscia.
+- Zarzadzanie personelem i sklepami.
+- Raportowanie.
 
-5. Integrations, notifications, and quality.
-   - Cloud storage integration.
-   - Pub/Sub and e-mail worker.
-   - Testing, CI, deployment notes, and environment setup.
+### Faza 7: Zdarzenia i powiadomienia
 
-## 9. Development Guidelines
+- Publikacja zdarzen dla istotnych zmian zamowien.
+- Asynchroniczne powiadomienia e-mail.
+- Mechanizmy ponowien i dead-letter.
 
-### 9.1 Working Principles
+### Faza 8: Jakosc i gotowosc do wydania
 
-- Build the simplest version that satisfies the requirement first.
-- Keep frontend and backend contracts aligned.
-- Prefer small vertical slices over isolated technical work when possible.
-- Do not implement features before the data model and access rules are clear.
-- Use shared terminology in code, docs, tests, and UI text.
+- Testy jednostkowe, integracyjne i end-to-end.
+- Linting i formatowanie.
+- Konfiguracja wdrozen i checklista wydan.
+- Wytyczne kopii zapasowych, monitoringu i odzyskiwania.
 
-### 9.2 Definition of Done
+## 8. Podzial pracy zespolu (5 strumieni)
 
-A task is complete only when:
+1. Backend i model danych.
+2. Uwierzytelnianie i autoryzacja.
+3. Frontend dla klienta.
+4. Frontend dla personelu i administracji.
+5. Integracje, powiadomienia i jakosc.
 
-- the feature works end to end,
-- errors are handled,
-- tests are added or updated,
-- documentation is updated if needed,
-- the feature is verified locally.
+## 9. Zasady realizacji
 
-### 9.3 What Should Be Standardized Early
+### 9.1 Zasady pracy
 
-- Role names.
-- Order statuses.
-- File type and size limits.
-- API paths and response shapes.
-- Date and time handling.
-- Configuration keys for local and cloud environments.
+- Najpierw najprostsza wersja, ktora spelnia wymaganie.
+- Kontrakty frontend-backend sa zawsze uzgadniane.
+- Preferowane sa male, pionowe przyrosty funkcji.
+- Brak implementacji funkcji bez jasnego modelu danych i zasad dostepu.
+- Wspolne slownictwo obowiazuje w kodzie, dokumentacji, testach i UI.
 
-## 10. Local Development Setup
+### 9.2 Definicja ukonczenia zadania
 
-This section is meant for contributors who may have no prior programming experience.
+Zadanie jest zakonczone tylko wtedy, gdy:
 
-### 10.1 What to Install
+- funkcja dziala od konca do konca,
+- bledy sa obsluzone,
+- testy sa dodane lub zaktualizowane,
+- dokumentacja jest zaktualizowana (jesli dotyczy),
+- funkcja jest zweryfikowana lokalnie.
 
-- Git.
-- Java 25 for the backend.
-- Node.js 18 or newer for the frontend.
-- VS Code.
-- A terminal application.
-- Optional: Docker Desktop or Docker Engine if the team wants a shared local database later.
+### 9.3 Co standaryzujemy najwczesniej
 
-### 10.1.1 Local PostgreSQL via Docker (Team Standard)
+- Nazwy rol.
+- Statusy zamowien.
+- Limity typow i rozmiarow plikow.
+- Sciezki API i ksztalt odpowiedzi.
+- Obsluge dat i czasu.
+- Klucze konfiguracji lokalnej i chmurowej.
 
-For consistency across machines, local PostgreSQL should run in Docker using a simple script-based flow.
+W zakresie zadania 1.2 obowiazujacy standard kontraktu API i formatu bledow znajduje sie w pliku: KONTRAKT_API_I_OBSLUGA_BLEDOW.md.
+W zakresie modelu domeny v0 obowiazuje slownik i mapowanie z pliku: SLOWNIK_I_MODEL_DOMENY.md.
 
-Minimum expected commands:
+## 10. Srodowisko lokalne
 
-- Start local database container.
-- Stop and remove local database container.
-- Create a database dump file.
-- Restore database state from a dump file.
+### 10.1 Co trzeba zainstalowac
 
-The script(s) should be versioned in the repository so every contributor uses the same database image, port, credentials, and database name.
+- Git,
+- Java 25,
+- Node.js 18 lub nowszy,
+- VS Code,
+- terminal,
+- opcjonalnie Docker Desktop / Docker Engine.
 
-### 10.2 First-Time Setup Steps
+### 10.2 Standard lokalnej bazy
 
-1. Clone the repository.
-2. Open the project in VS Code.
-3. Open two terminals: one for backend, one for frontend.
-4. Install frontend dependencies.
-5. Verify Java and Node versions.
-6. Create local environment files for backend and frontend.
-7. Start the backend using the run instructions in [backend/README.md](backend/README.md).
-8. Start the frontend using the run instructions in [frontend/README.md](frontend/README.md).
-9. Confirm both services open in the browser without errors.
+Lokalna baza PostgreSQL dziala w Dockerze. Zespol ma wspolne skrypty do:
 
-### 10.3 Environment Variables To Expect
+- startu bazy,
+- zatrzymania i usuniecia kontenera,
+- wykonania zrzutu (dump),
+- odtworzenia stanu z dumpa.
 
-- Backend database connection values.
-- Firebase project and credential values.
-- Google Cloud Storage bucket or upload configuration.
-- Pub/Sub topic and subscription names.
-- E-mail provider settings.
-- Frontend backend URL.
+Skrypty musza byc trzymane w repozytorium, aby kazdy uzywal tych samych ustawien.
 
-### 10.3.1 Database Backup and Restore Requirement
+### 10.3 Kroki pierwszego uruchomienia
 
-The local and non-production environments must support state export and import.
+1. Sklonuj repozytorium.
+2. Otworz projekt w VS Code.
+3. Uruchom dwa terminale (backend i frontend).
+4. Zainstaluj zaleznosci frontendu.
+5. Sprawdz wersje Java i Node.
+6. Utworz lokalne pliki srodowiskowe.
+7. Uruchom backend zgodnie z backend/README.md.
+8. Uruchom frontend zgodnie z frontend/README.md.
+9. Sprawdz, czy oba serwisy dzialaja bez bledow.
 
-- Export: ability to create a SQL dump from PostgreSQL.
-- Import: ability to restore the dump into another PostgreSQL instance.
-- Dumps should be shareable within the team for reproducible testing and debugging.
+### 10.4 Zmienne srodowiskowe
 
-### 10.4 Beginner-Friendly Rules
+Minimalny zakres:
 
-- If a command fails, read the error before trying random fixes.
-- Change one thing at a time.
-- Keep the terminal output when asking for help.
-- Do not edit source code just to make a build pass without understanding why it failed.
+- polaczenie do PostgreSQL,
+- konfiguracja Firebase,
+- konfiguracja Google Cloud Storage,
+- konfiguracja Pub/Sub,
+- konfiguracja e-mail,
+- URL backendu dla frontendu.
 
-## 11. Testing Strategy
+## 11. Strategia testow
 
-### 11.1 Backend Tests
+- Testy backendu: logika cen, walidacje, przejscia statusow, repozytoria, autoryzacja.
+- Testy frontendu: formularze, routing oparty o role, obsluga bledow API.
+- Testy end-to-end: pelne scenariusze goscia, klienta, pracownika, menedzera i administratora.
 
-- Unit tests for pricing, validation, and status transitions.
-- Repository tests for database interactions.
-- Security tests for role and ownership checks.
-- Integration tests for order creation, file metadata, and reporting.
+## 12. Wdrazanie i operacje
 
-### 11.2 Frontend Tests
+Wymagane elementy wdrozenia:
 
-- Component tests for forms and views.
-- Routing tests for role-based navigation.
-- API integration tests for main flows where practical.
+- backend,
+- frontend,
+- PostgreSQL,
+- Google Cloud Storage,
+- Pub/Sub,
+- integracja e-mail.
 
-### 11.3 End-to-End Scenarios
+Obszary operacyjne:
 
-- Guest browsing and estimation.
-- Client registration, file upload, and order submission.
-- Staff review, status updates, and file download.
-- Manager configuration changes.
-- Administrator account and shop management.
+- konfiguracja per srodowisko,
+- bezpieczna obsluga sekretow,
+- kopie zapasowe i odzyskiwanie,
+- logowanie i monitoring,
+- ponowienia i dead-letter dla wiadomosci asynchronicznych.
 
-## 12. Deployment and Operations
+Checklista wydania:
 
-### 12.1 Required Deployment Pieces
+- testy przechodza,
+- build przechodzi,
+- zmienne srodowiskowe sa uzupelnione,
+- zasoby chmurowe sa dostepne,
+- kluczowe przeplywy sa przetestowane.
 
-- Backend service.
-- Frontend build deployment.
-- PostgreSQL database.
-- Google Cloud Storage bucket.
-- Pub/Sub configuration.
-- E-mail provider integration.
+## 13. Ograniczenia i zalozenia
 
-### 12.2 Operational Concerns
+- Repozytorium jest na etapie szkieletu; wiekszosc funkcji trzeba zbudowac.
+- Architektura ma pozostac cloud-friendly i event-driven.
+- Priorytetem jest stabilny fundament, a nie dopracowanie UI na starcie.
+- Docker jest standardem dla lokalnej bazy, ale nie blokuje uruchamiania aplikacji lokalnie.
 
-- Environment-specific configuration.
-- Secrets handling.
-- Backup and recovery.
-- Logging and monitoring.
-- Retry and dead-letter handling for async messages.
+## 14. Pierwsze zalecane zadania
 
-### 12.3 Release Checklist
+1. Ujednolicenie slownictwa i zakresu projektu.
+2. Rozszerzenie instrukcji uruchamiania srodowiska.
+3. Definicja modelu danych i cyklu zycia zamowienia.
+4. Przygotowanie bezpieczenstwa backendu i kontraktow API.
+5. Zastapienie frontendu startowego docelowa powloka aplikacji.
 
-- Local tests pass.
-- Build succeeds.
-- Environment variables are defined.
-- Cloud resources are reachable.
-- Main user flows are smoke-tested.
+## 15. Decyzje ustalone dla biezacego zakresu
 
-## 13. Initial Constraints and Assumptions
-
-- The current repository is still a skeleton and most features must be built from scratch.
-- The architecture should remain cloud-friendly and event-driven.
-- The first priority should be establishing clear foundations rather than polishing UI or adding advanced features too early.
-- Docker should be optional for onboarding, not a blocker for new contributors.
-
-Note: for this project, local PostgreSQL in Docker is adopted as the team standard for consistency, while application runtime remains local (backend/frontend started from host machine).
-
-## 14. Suggested First Tasks
-
-1. Normalize the project terminology and scope.
-2. Add the backend and frontend environment instructions in more detail.
-3. Define the initial data model and order lifecycle.
-4. Set up backend security and API contracts.
-5. Replace the starter frontend with the real application shell.
-
-## 15. Open Questions
-
-The following decisions are now fixed for the current implementation scope:
-
-- Local database: use PostgreSQL in Docker with repository scripts for start, stop, dump, and restore.
-- Authorization model: use a hybrid approach.
-  - Firebase handles authentication identity and token issuance.
-  - Minimal custom claims are allowed for coarse-grained role hints.
-  - Backend database remains the source of truth for role scope and authorization details.
-  - Backend enforces permissions server-side on every protected operation.
-- Reports: PDF is mandatory for the first release; CSV is optional and may be added later.
-- Release scope: first release includes manager and administrator panels, even if some views are stubbed or placeholder-only initially.
+- Lokalna baza: PostgreSQL w Dockerze, z wersjonowanymi skryptami start/stop/dump/restore.
+- Autoryzacja: model hybrydowy.
+  - Firebase odpowiada za logowanie i token.
+  - Minimalne custom claims moga sluzyc jako wskazowka roli.
+  - Backendowa baza danych jest zrodlem prawdy dla zakresu uprawnien.
+  - Backend egzekwuje uprawnienia dla kazdej operacji chronionej.
+- Raporty: PDF jest wymagany w pierwszym wydaniu; CSV jest opcjonalne.
+- Zakres pierwszego wydania: obejmuje panel menedzera i administratora (nawet jesli czesc widokow bedzie tymczasowo szkieletowa).
