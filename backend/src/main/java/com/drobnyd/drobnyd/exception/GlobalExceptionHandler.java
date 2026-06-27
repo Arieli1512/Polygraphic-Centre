@@ -2,6 +2,7 @@ package com.drobnyd.drobnyd.exception;
 
 import com.drobnyd.drobnyd.constants.ErrorCodes;
 import com.drobnyd.drobnyd.dto.ApiProblemResponse;
+import com.drobnyd.drobnyd.exception.InvalidQueryParametersException;
 
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
@@ -23,57 +24,59 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ApiProblemResponse> handleResourceNotFoundException(
-            ResourceNotFoundException exception,
-            HttpServletRequest request
+        ResourceNotFoundException exception,
+        HttpServletRequest request
     ) {
         ApiProblemResponse response = new ApiProblemResponse(
-                "https://api.polygraphic-centre.dev/problems/resource-not-found",
-                "Resource Not Found",
-                HttpStatus.NOT_FOUND.value(),
-                exception.getMessage(),
-                request.getRequestURI(),
-                ErrorCodes.RESOURCE_NOT_FOUND,
-                "Nie znaleziono wskazanego zasobu.",
-                "Sprawdź identyfikator i spróbuj ponownie.",
-                false,
-                getRequestId(request),
-                getTraceId(request),
-                Instant.now()
+            "https://api.polygraphic-centre.dev/problems/resource-not-found",
+            "Resource Not Found",
+            HttpStatus.NOT_FOUND.value(),
+            exception.getMessage(),
+            request.getRequestURI(),
+            ErrorCodes.RESOURCE_NOT_FOUND,
+            "Nie znaleziono wskazanego zasobu.",
+            "Sprawdź identyfikator i spróbuj ponownie.",
+            null,
+            false,
+            getRequestId(request),
+            getTraceId(request),
+            Instant.now()
         );
 
         return ResponseEntity
-                .status(HttpStatus.NOT_FOUND)
-                .contentType(MediaType.APPLICATION_PROBLEM_JSON)
-                .body(response);
+            .status(HttpStatus.NOT_FOUND)
+            .contentType(MediaType.APPLICATION_PROBLEM_JSON)
+            .body(response);
     }
 
     /**
      * Ścieżka API nie istnieje, np. literówka w URL.
-     */
+    */
     @ExceptionHandler(NoResourceFoundException.class)
     public ResponseEntity<ApiProblemResponse> handleNoResourceFoundException(
             NoResourceFoundException exception,
             HttpServletRequest request
     ) {
         ApiProblemResponse response = new ApiProblemResponse(
-                "https://api.drobnyd.pl/problems/endpoint-not-found",
-                "Resource Not Found",
-                HttpStatus.NOT_FOUND.value(),
-                "Requested endpoint does not exist.",
-                request.getRequestURI(),
-                ErrorCodes.RESOURCE_NOT_FOUND,
-                "Nie znaleziono wskazanego endpointu.",
-                "Sprawdź adres URL i spróbuj ponownie.",
-                false,
-                getRequestId(request),
-                getTraceId(request),
-                Instant.now()
+            "https://api.drobnyd.pl/problems/endpoint-not-found",
+            "Resource Not Found",
+            HttpStatus.NOT_FOUND.value(),
+            "Requested endpoint does not exist.",
+            request.getRequestURI(),
+            ErrorCodes.RESOURCE_NOT_FOUND,
+            "Nie znaleziono wskazanego endpointu.",
+            "Sprawdź adres URL i spróbuj ponownie.",
+            null,
+            false,
+            getRequestId(request),
+            getTraceId(request),
+            Instant.now()
         );
 
         return ResponseEntity
-                .status(HttpStatus.NOT_FOUND)
-                .contentType(MediaType.APPLICATION_PROBLEM_JSON)
-                .body(response);
+            .status(HttpStatus.NOT_FOUND)
+            .contentType(MediaType.APPLICATION_PROBLEM_JSON)
+            .body(response);
     }
 
     /**
@@ -86,24 +89,55 @@ public class GlobalExceptionHandler {
             HttpServletRequest request
     ) {
         ApiProblemResponse response = new ApiProblemResponse(
-                "https://api.drobnyd.pl/problems/internal-error",
-                "Internal Error",
-                HttpStatus.INTERNAL_SERVER_ERROR.value(),
-                "Unexpected internal server error.",
-                request.getRequestURI(),
-                ErrorCodes.INTERNAL_ERROR,
-                "Wystąpił nieoczekiwany błąd.",
-                "Spróbuj ponownie później albo skontaktuj się z obsługą.",
-                false,
-                getRequestId(request),
-                getTraceId(request),
-                Instant.now()
+            "https://api.drobnyd.pl/problems/internal-error",
+            "Internal Error",
+            HttpStatus.INTERNAL_SERVER_ERROR.value(),
+            "Unexpected internal server error.",
+            request.getRequestURI(),
+            ErrorCodes.INTERNAL_ERROR,
+            "Wystąpił nieoczekiwany błąd.",
+            "Spróbuj ponownie później albo skontaktuj się z obsługą.",
+            null,
+            false,
+            getRequestId(request),
+            getTraceId(request),
+            Instant.now()
         );
 
         return ResponseEntity
-                .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .contentType(MediaType.APPLICATION_PROBLEM_JSON)
-                .body(response);
+            .status(HttpStatus.INTERNAL_SERVER_ERROR)
+            .contentType(MediaType.APPLICATION_PROBLEM_JSON)
+            .body(response);
+    }
+
+    /**
+     * Nieprawidłowe `query params` w adresie URL
+    */
+    @ExceptionHandler(InvalidQueryParametersException.class)
+    public ResponseEntity<ApiProblemResponse> handleInvalidQueryParameters(
+        InvalidQueryParametersException exception,
+        HttpServletRequest request
+    ) {
+        ApiProblemResponse response = new ApiProblemResponse(
+            "https://api.polygraphic-centre.dev/problems/invalid-query-parameters",
+            "Invalid Query Parameters",
+            HttpStatus.BAD_REQUEST.value(),
+            exception.getMessage(),
+            request.getRequestURI(),
+            ErrorCodes.INVALID_QUERY_PARAMETERS,
+            "Nieprawidłowe parametry zapytania.",
+            "Popraw parametry w adresie URL i spróbuj ponownie.",
+            exception.getErrors(),
+            false,
+            getRequestId(request),
+            getTraceId(request),
+            Instant.now()
+        );
+
+        return ResponseEntity
+            .status(HttpStatus.UNPROCESSABLE_ENTITY)
+            .contentType(MediaType.APPLICATION_PROBLEM_JSON)
+            .body(response);
     }
 
     private String getRequestId(HttpServletRequest request) {

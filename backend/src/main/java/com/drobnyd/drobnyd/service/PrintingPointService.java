@@ -8,28 +8,28 @@ import java.util.List;
 
 @Service
 public class PrintingPointService {
-        private final List<PrintingPointResponse> printingPoints = List.of(
-                new PrintingPointResponse(
-                        1,
-                        "Main Printing Point",
-                        "Example Street 1",
-                        "Warsaw",
-                        "00-001",
-                        "Poland",
-                        20
-                ),
-                new PrintingPointResponse(
-                        2,
-                        "Campus Printing Point",
-                        "University Avenue 10",
-                        "Warsaw",
-                        "00-002",
-                        "Poland",
-                        15
-                )
-        );
+    private final List<PrintingPointResponse> printingPoints = List.of(
+        new PrintingPointResponse(
+                1,
+                "Main Printing Point",
+                "Example Street 1",
+                "Warsaw",
+                "00-001",
+                "Poland",
+                20
+        ),
+        new PrintingPointResponse(
+                2,
+                "Campus Printing Point",
+                "University Avenue 10",
+                "Warsaw",
+                "00-002",
+                "Poland",
+                15
+        )
+    );
 
-      public List<PrintingPointResponse> findAll() {
+    public List<PrintingPointResponse> findAll() {
         return printingPoints;
     }
 
