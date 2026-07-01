@@ -68,7 +68,7 @@ body {
 
 h1,
 h2 {
-  font-family: var(--heading);
+  font-family: var(--heading), sans-serif;
   font-weight: 500;
   color: var(--text-h);
 }
@@ -97,7 +97,7 @@ p {
 
 code,
 .counter {
-  font-family: var(--mono);
+  font-family: var(--mono), monospace;
   display: inline-flex;
   border-radius: 4px;
   color: var(--text-h);
@@ -109,3 +109,18 @@ code {
   padding: 4px 8px;
   background: var(--code-bg);
 }
+
+/* App layout helpers */
+main, .MuiBox-root[role="main"] {
+  padding: 16px;
+}
+
+.MuiPaper-root {
+  background: #fff;
+}
+
+/* Responsive container tweaks */
+@media (max-width: 720px) {
+  h1 { font-size: 28px; }
+}
+

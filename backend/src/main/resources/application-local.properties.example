@@ -1,9 +1,10 @@
-spring.application.name=drobnyd
+# Copy this file to application-local.properties for local development.
+# Activate it with SPRING_PROFILES_ACTIVE=local.
 
 # Local database (Podman/Docker published port)
 spring.datasource.url=jdbc:postgresql://localhost:5433/drobnyd
-spring.datasource.username=postgres
-spring.datasource.password=postgres
+spring.datasource.username=drobnyd
+spring.datasource.password=change-me
 
 # Firebase Admin SDK
 firebase.admin.service-account-resource=firebase-service-account.json
