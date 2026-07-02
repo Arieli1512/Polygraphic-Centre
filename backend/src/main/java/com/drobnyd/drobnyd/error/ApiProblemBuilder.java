@@ -80,7 +80,8 @@ public final class ApiProblemBuilder {
     }
 
     public ResponseEntity<ApiProblemResponse> toResponseEntity(
-        HttpServletRequest request
+        HttpServletRequest request,
+        TraceContextProvider traceContextProvider
     ) {
         ApiProblemResponse response = new ApiProblemResponse(
             PROBLEM_BASE_URL + slug,
@@ -94,7 +95,7 @@ public final class ApiProblemBuilder {
             errors.isEmpty() ? null : errors,
             retryable,
             getRequestId(request),
-            getTraceId(request),
+            getTraceId(traceContextProvider),
             Instant.now()
         );
 
@@ -111,8 +112,7 @@ public final class ApiProblemBuilder {
         return requestId.toString();
     }
 
-    private static String getTraceId(HttpServletRequest request) {
-        // TODO: zaimplementować prawdziwy error tracing
-        return getRequestId(request);
+    private static String getTraceId(TraceContextProvider traceContextProvider) {
+        return traceContextProvider.currentTraceId();
     }
 }

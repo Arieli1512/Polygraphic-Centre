@@ -19,6 +19,12 @@ import java.util.List;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    private final TraceContextProvider traceContextProvider;
+
+    public GlobalExceptionHandler(TraceContextProvider traceContextProvider) {
+        this.traceContextProvider = traceContextProvider;
+    }
+
     /**
      * Endpoint istnieje, ale konkretny zasób nie został znaleziony.
      * Na przykład: punkt druku o zadanym ID już nie istnieje.
@@ -37,7 +43,7 @@ public class GlobalExceptionHandler {
             .userMessage("Nie znaleziono wskazanego zasobu.")
             .action("Sprawdź identyfikator i spróbuj ponownie.")
             .retryable(false)
-            .toResponseEntity(request);
+            .toResponseEntity(request, traceContextProvider);
     }
 
     /**
@@ -57,7 +63,7 @@ public class GlobalExceptionHandler {
             .userMessage("Nie znaleziono wskazanego endpointu.")
             .action("Sprawdź adres URL i spróbuj ponownie.")
             .retryable(false)
-            .toResponseEntity(request);
+            .toResponseEntity(request, traceContextProvider);
     }
 
     /**
@@ -112,7 +118,7 @@ public class GlobalExceptionHandler {
                 )
             ))
             .retryable(false)
-            .toResponseEntity(request);
+            .toResponseEntity(request, traceContextProvider);
     }
 
     /**
@@ -140,7 +146,7 @@ public class GlobalExceptionHandler {
                 )
             ))
             .retryable(false)
-            .toResponseEntity(request);
+            .toResponseEntity(request, traceContextProvider);
     }
 
     /**
@@ -148,7 +154,7 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(ValidationErrorException.class)
     public ResponseEntity<ApiProblemResponse> handleInvalidRequest(
-            ValidationErrorException exception,
+        ValidationErrorException exception,
         HttpServletRequest request
     ) {
         return ApiProblemBuilder
@@ -161,7 +167,7 @@ public class GlobalExceptionHandler {
             .action("Popraw wskazane pola i spróbuj ponownie.")
             .validationErrors(exception.getErrors())
             .retryable(false)
-            .toResponseEntity(request);
+            .toResponseEntity(request, traceContextProvider);
     }
 
     private ResponseEntity<ApiProblemResponse> invalidQueryParametersResponse(
@@ -179,7 +185,7 @@ public class GlobalExceptionHandler {
             .action("Popraw parametry w adresie URL i spróbuj ponownie.")
             .validationErrors(errors)
             .retryable(false)
-            .toResponseEntity(request);
+            .toResponseEntity(request, traceContextProvider);
     }
 
     private String parameterName(ParameterValidationResult result) {
@@ -204,6 +210,6 @@ public class GlobalExceptionHandler {
             .userMessage("Wystąpił nieoczekiwany błąd.")
             .action("Spróbuj ponownie później albo skontaktuj się z obsługą.")
             .retryable(false)
-            .toResponseEntity(request);
+            .toResponseEntity(request, traceContextProvider);
     }
 }
