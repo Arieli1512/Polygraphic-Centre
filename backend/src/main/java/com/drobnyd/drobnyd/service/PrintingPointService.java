@@ -1,5 +1,6 @@
 package com.drobnyd.drobnyd.service;
 
+import com.drobnyd.drobnyd.dto.PageResult;
 import com.drobnyd.drobnyd.dto.PrintingPointResponse;
 import com.drobnyd.drobnyd.exception.ResourceNotFoundException;
 import org.springframework.stereotype.Service;
@@ -30,8 +31,24 @@ public class PrintingPointService {
         )
     ));
 
-    public List<PrintingPointResponse> findAll() {
-        return List.copyOf(printingPoints);
+    public PageResult<PrintingPointResponse> findAll(int page, int size) {
+        int totalItems = printingPoints.size();
+        int totalPages = (int) Math.ceil((double) totalItems / size);
+
+        int fromIndex = Math.min(page * size, totalItems);
+        int toIndex = Math.min(fromIndex + size, totalItems);
+
+        List<PrintingPointResponse> items = List.copyOf(
+            printingPoints.subList(fromIndex, toIndex)
+        );
+
+        return new PageResult<>(
+            items,
+            page,
+            size,
+            totalItems,
+            totalPages
+        );
     }
 
     public PrintingPointResponse findById(String printingPointId) {

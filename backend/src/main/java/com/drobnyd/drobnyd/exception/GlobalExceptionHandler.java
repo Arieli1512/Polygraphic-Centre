@@ -8,10 +8,12 @@ import com.drobnyd.drobnyd.dto.ApiFieldError;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.method.ParameterValidationResult;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
+import org.springframework.web.method.annotation.HandlerMethodValidationException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import java.util.List;
@@ -61,24 +63,30 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * Nieprawidłowe query params w adresie URL.
+     * Nieprawidłowe query params wykryte przez Bean Validation.
+     * Akumuluje wszystkie naruszenia z walidacji parametrów metody.
      */
-    @ExceptionHandler(InvalidQueryParametersException.class)
-    public ResponseEntity<ApiProblemResponse> handleInvalidQueryParameters(
-        InvalidQueryParametersException exception,
+    @ExceptionHandler(HandlerMethodValidationException.class)
+    public ResponseEntity<ApiProblemResponse> handleHandlerMethodValidation(
+        HandlerMethodValidationException exception,
         HttpServletRequest request
     ) {
-        return ApiProblemBuilder
-            .slug("invalid-query-parameters")
-            .title("Invalid Query Parameters")
-            .status(HttpStatus.BAD_REQUEST)
-            .code(ErrorCodes.INVALID_QUERY_PARAMETERS)
-            .detail(exception.getMessage())
-            .userMessage("Nieprawidłowe parametry zapytania.")
-            .action("Popraw parametry w adresie URL i spróbuj ponownie.")
-            .validationErrors(exception.getErrors())
-            .retryable(false)
-            .toResponseEntity(request);
+        List<ApiFieldError> errors = exception.getParameterValidationResults()
+            .stream()
+            .flatMap(result -> result.getResolvableErrors()
+                .stream()
+                .map(error -> new ApiFieldError(
+                    parameterName(result),
+                    error.getDefaultMessage(),
+                    null
+                )))
+            .toList();
+
+        return invalidQueryParametersResponse(
+            "Invalid query parameters.",
+            errors,
+            request
+        );
     }
 
     /**
@@ -135,6 +143,29 @@ public class GlobalExceptionHandler {
             ))
             .retryable(false)
             .toResponseEntity(request);
+    }
+
+
+    private ResponseEntity<ApiProblemResponse> invalidQueryParametersResponse(
+        String detail,
+        List<ApiFieldError> errors,
+        HttpServletRequest request
+    ) {
+        return ApiProblemBuilder
+            .slug("invalid-query-parameters")
+            .title("Invalid Query Parameters")
+            .status(HttpStatus.BAD_REQUEST)
+            .code(ErrorCodes.INVALID_QUERY_PARAMETERS)
+            .detail(detail)
+            .userMessage("Nieprawidłowe parametry zapytania.")
+            .action("Popraw parametry w adresie URL i spróbuj ponownie.")
+            .validationErrors(errors)
+            .retryable(false)
+            .toResponseEntity(request);
+    }
+
+    private String parameterName(ParameterValidationResult result) {
+        return result.getMethodParameter().getParameterName();
     }
 
 

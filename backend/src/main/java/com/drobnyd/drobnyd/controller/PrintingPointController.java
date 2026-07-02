@@ -4,16 +4,16 @@ import com.drobnyd.drobnyd.dto.ApiMeta;
 import com.drobnyd.drobnyd.dto.ApiResponse;
 import com.drobnyd.drobnyd.dto.ApiPageResponse;
 import com.drobnyd.drobnyd.dto.ApiPageMeta;
+import com.drobnyd.drobnyd.dto.PageResult;
 import com.drobnyd.drobnyd.dto.PrintingPointResponse;
 import com.drobnyd.drobnyd.common.ApiPaginationLinks;
-import com.drobnyd.drobnyd.validation.PaginationValidator;
-
 import com.drobnyd.drobnyd.service.PrintingPointService;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.Instant;
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/printing-points")
@@ -26,33 +26,28 @@ public class PrintingPointController {
 
     @GetMapping
     public ApiPageResponse<PrintingPointResponse> getPrintingPoints(
-        @RequestParam(defaultValue = "0") int page,
-        @RequestParam(defaultValue = "20") int size,
+        @RequestParam(defaultValue = "0") @Min(0) int page,
+        @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size,
         HttpServletRequest request
     ) {
-        PaginationValidator.validate(page, size);
-
-        List<PrintingPointResponse> printingPoints = printingPointService.findAll();
-
-        int totalItems = printingPoints.size();
-        int totalPages = (int) Math.ceil((double) totalItems / size);
-
-        int fromIndex = Math.min(page * size, totalItems);
-        int toIndex = Math.min(fromIndex + size, totalItems);
-
-        List<PrintingPointResponse> pageData = printingPoints.subList(fromIndex, toIndex);
+        PageResult<PrintingPointResponse> printingPoints = printingPointService.findAll(page, size);
 
         return new ApiPageResponse<>(
-            pageData,
+            printingPoints.items(),
             new ApiPageMeta(
                 getRequestId(request),
-                page,
-                size,
-                totalItems,
-                totalPages,
+                printingPoints.page(),
+                printingPoints.size(),
+                printingPoints.totalItems(),
+                printingPoints.totalPages(),
                 Instant.now()
             ),
-            ApiPaginationLinks.build(request, page, size, totalPages)
+            ApiPaginationLinks.build(
+                request,
+                printingPoints.page(),
+                printingPoints.size(),
+                printingPoints.totalPages()
+            )
         );
     }
 
