@@ -70,6 +70,20 @@ public class PrintingPointController {
         );
     }
 
+    @DeleteMapping("/{printingPointId}")
+    public ApiResponse<Integer> deletePrintingPoint(
+        @PathVariable String printingPointId,
+        HttpServletRequest request
+    ) {
+        return new ApiResponse<>(
+            printingPointService.deleteById(printingPointId),
+            new ApiMeta(
+                getRequestId(request),
+                Instant.now()
+            )
+        );
+    }
+
     private String getRequestId(HttpServletRequest request) {
         return (String) request.getAttribute("requestId");
     }

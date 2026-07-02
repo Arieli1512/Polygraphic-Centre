@@ -5,10 +5,11 @@ import com.drobnyd.drobnyd.exception.ResourceNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 @Service
 public class PrintingPointService {
-    private final List<PrintingPointResponse> printingPoints = List.of(
+    private final List<PrintingPointResponse> printingPoints = new CopyOnWriteArrayList<>(List.of(
         new PrintingPointResponse(
                 1,
                 "Main Printing Point",
@@ -27,18 +28,29 @@ public class PrintingPointService {
                 "Poland",
                 15
         )
-    );
+    ));
 
     public List<PrintingPointResponse> findAll() {
-        return printingPoints;
+        return List.copyOf(printingPoints);
     }
 
-     public PrintingPointResponse findById(String printingPointId) {
+    public PrintingPointResponse findById(String printingPointId) {
         return printingPoints.stream()
-            .filter(point -> point.printingPointId().equals(printingPointId))
+            .filter(point -> hasId(point, printingPointId))
             .findFirst()
             .orElseThrow(() -> new ResourceNotFoundException(
                     "Printing point not found: " + printingPointId
             ));
+    }
+
+    public Integer deleteById(String printingPointId) {
+        PrintingPointResponse printingPoint = findById(printingPointId);
+        printingPoints.remove(printingPoint);
+
+        return printingPoint.printingPointId();
+    }
+
+    private boolean hasId(PrintingPointResponse point, String printingPointId) {
+        return point.printingPointId().toString().equals(printingPointId);
     }
 }
