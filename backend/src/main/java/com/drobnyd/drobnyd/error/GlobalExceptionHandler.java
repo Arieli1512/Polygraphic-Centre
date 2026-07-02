@@ -154,7 +154,7 @@ public class GlobalExceptionHandler {
         return ApiProblemBuilder
             .slug("validation-error")
             .title("Validation Error")
-            .status(HttpStatus.BAD_REQUEST)
+            .status(HttpStatus.UNPROCESSABLE_ENTITY)
             .code(ErrorCodes.VALIDATION_ERROR)
             .detail(exception.getMessage())
             .userMessage("Nieprawidłowe dane formularza.")
