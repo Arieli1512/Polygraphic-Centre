@@ -9,15 +9,15 @@ import jakarta.validation.constraints.Size;
 
 public record PrintingPointRequest(
     @NotBlank
-    @Size(max = 100)
+    @Size(max = 255)
     String name,
 
     @NotBlank
-    @Size(max = 150)
+    @Size(max = 255)
     String streetAddress,
 
     @NotBlank
-    @Size(max = 80)
+    @Size(max = 100)
     String city,
 
     @NotBlank
@@ -25,12 +25,12 @@ public record PrintingPointRequest(
     String postalCode,
 
     @NotBlank
-    @Size(max = 80)
+    @Size(max = 100)
     String country,
 
     @NotNull
     @Min(1)
-    @Max(1000)
+    @Max(40)
     Integer hourlyOrderLimit
 ) {
 }
