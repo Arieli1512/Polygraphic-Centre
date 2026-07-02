@@ -1,6 +1,6 @@
-package com.drobnyd.drobnyd.exception;
+package com.drobnyd.drobnyd.error;
 
-import com.drobnyd.drobnyd.dto.ApiFieldError;
+import com.drobnyd.drobnyd.api.ApiFieldError;
 
 import java.util.List;
 

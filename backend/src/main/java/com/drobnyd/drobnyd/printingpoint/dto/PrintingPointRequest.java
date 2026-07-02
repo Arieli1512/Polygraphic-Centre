@@ -1,4 +1,4 @@
-package com.drobnyd.drobnyd.dto;
+package com.drobnyd.drobnyd.printingpoint.dto;
 
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;

@@ -1,9 +1,7 @@
-package com.drobnyd.drobnyd.exception;
+package com.drobnyd.drobnyd.error;
 
-import com.drobnyd.drobnyd.common.ApiProblemBuilder;
-import com.drobnyd.drobnyd.constants.ErrorCodes;
-import com.drobnyd.drobnyd.dto.ApiProblemResponse;
-import com.drobnyd.drobnyd.dto.ApiFieldError;
+import com.drobnyd.drobnyd.api.ApiProblemResponse;
+import com.drobnyd.drobnyd.api.ApiFieldError;
 
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;

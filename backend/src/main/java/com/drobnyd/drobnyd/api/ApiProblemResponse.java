@@ -1,6 +1,4 @@
-package com.drobnyd.drobnyd.dto;
-
-import com.drobnyd.drobnyd.dto.ApiFieldError;
+package com.drobnyd.drobnyd.api;
 
 import java.time.Instant;
 import java.util.List;

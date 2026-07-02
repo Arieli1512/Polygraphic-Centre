@@ -1,7 +1,7 @@
 package com.drobnyd.drobnyd.validation;
 
-import com.drobnyd.drobnyd.dto.ApiFieldError;
-import com.drobnyd.drobnyd.exception.ValidationErrorException;
+import com.drobnyd.drobnyd.api.ApiFieldError;
+import com.drobnyd.drobnyd.error.ValidationErrorException;
 import org.springframework.validation.BindingResult;
 
 import java.util.ArrayList;

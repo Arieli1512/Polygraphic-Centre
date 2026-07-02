@@ -1,4 +1,4 @@
-package com.drobnyd.drobnyd.exception;
+package com.drobnyd.drobnyd.error;
 
 public class ResourceNotFoundException extends RuntimeException {
 

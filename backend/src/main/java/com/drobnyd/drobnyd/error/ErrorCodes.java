@@ -1,4 +1,4 @@
-package com.drobnyd.drobnyd.constants;
+package com.drobnyd.drobnyd.error;
 
 public final class ErrorCodes {
 

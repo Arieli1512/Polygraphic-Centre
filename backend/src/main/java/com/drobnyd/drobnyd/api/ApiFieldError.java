@@ -1,4 +1,4 @@
-package com.drobnyd.drobnyd.dto;
+package com.drobnyd.drobnyd.api;
 
 public record ApiFieldError(
     String field,

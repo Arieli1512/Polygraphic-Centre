@@ -1,4 +1,4 @@
-package com.drobnyd.drobnyd.dto;
+package com.drobnyd.drobnyd.printingpoint.dto;
 
 public record PrintingPointResponse(
     Integer printingPointId,

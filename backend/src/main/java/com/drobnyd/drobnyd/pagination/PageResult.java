@@ -1,4 +1,4 @@
-package com.drobnyd.drobnyd.dto;
+package com.drobnyd.drobnyd.pagination;
 
 import java.util.List;
 

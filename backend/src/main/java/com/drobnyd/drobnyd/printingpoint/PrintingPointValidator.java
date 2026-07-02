@@ -1,6 +1,7 @@
-package com.drobnyd.drobnyd.validation;
+package com.drobnyd.drobnyd.printingpoint;
 
-import com.drobnyd.drobnyd.dto.PrintingPointRequest;
+import com.drobnyd.drobnyd.printingpoint.dto.PrintingPointRequest;
+import com.drobnyd.drobnyd.validation.RequestValidator;
 import org.springframework.stereotype.Component;
 
 @Component

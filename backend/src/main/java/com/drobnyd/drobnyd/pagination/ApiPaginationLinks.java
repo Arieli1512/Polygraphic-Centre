@@ -1,6 +1,6 @@
-package com.drobnyd.drobnyd.common;
+package com.drobnyd.drobnyd.pagination;
 
-import com.drobnyd.drobnyd.dto.ApiLinks;
+import com.drobnyd.drobnyd.api.ApiLinks;
 import jakarta.servlet.http.HttpServletRequest;
 
 public final class ApiPaginationLinks {

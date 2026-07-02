@@ -1,9 +1,9 @@
-package com.drobnyd.drobnyd.service;
+package com.drobnyd.drobnyd.printingpoint;
 
-import com.drobnyd.drobnyd.dto.PageResult;
-import com.drobnyd.drobnyd.dto.PrintingPointRequest;
-import com.drobnyd.drobnyd.dto.PrintingPointResponse;
-import com.drobnyd.drobnyd.exception.ResourceNotFoundException;
+import com.drobnyd.drobnyd.pagination.PageResult;
+import com.drobnyd.drobnyd.printingpoint.dto.PrintingPointRequest;
+import com.drobnyd.drobnyd.printingpoint.dto.PrintingPointResponse;
+import com.drobnyd.drobnyd.error.ResourceNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.util.List;

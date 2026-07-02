@@ -1,15 +1,13 @@
-package com.drobnyd.drobnyd.controller;
+package com.drobnyd.drobnyd.printingpoint;
 
-import com.drobnyd.drobnyd.dto.ApiMeta;
-import com.drobnyd.drobnyd.dto.ApiResponse;
-import com.drobnyd.drobnyd.dto.ApiPageResponse;
-import com.drobnyd.drobnyd.dto.ApiPageMeta;
-import com.drobnyd.drobnyd.dto.PageResult;
-import com.drobnyd.drobnyd.dto.PrintingPointRequest;
-import com.drobnyd.drobnyd.dto.PrintingPointResponse;
-import com.drobnyd.drobnyd.common.ApiPaginationLinks;
-import com.drobnyd.drobnyd.service.PrintingPointService;
-import com.drobnyd.drobnyd.validation.PrintingPointValidator;
+import com.drobnyd.drobnyd.api.ApiMeta;
+import com.drobnyd.drobnyd.api.ApiResponse;
+import com.drobnyd.drobnyd.api.ApiPageResponse;
+import com.drobnyd.drobnyd.api.ApiPageMeta;
+import com.drobnyd.drobnyd.pagination.PageResult;
+import com.drobnyd.drobnyd.printingpoint.dto.PrintingPointRequest;
+import com.drobnyd.drobnyd.printingpoint.dto.PrintingPointResponse;
+import com.drobnyd.drobnyd.pagination.ApiPaginationLinks;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
