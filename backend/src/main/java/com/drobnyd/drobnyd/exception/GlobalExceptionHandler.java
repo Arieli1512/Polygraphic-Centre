@@ -145,6 +145,26 @@ public class GlobalExceptionHandler {
             .toResponseEntity(request);
     }
 
+    /**
+     * Nieprawidłowe dane formularza albo body requestu.
+     */
+    @ExceptionHandler(ValidationErrorException.class)
+    public ResponseEntity<ApiProblemResponse> handleInvalidRequest(
+            ValidationErrorException exception,
+        HttpServletRequest request
+    ) {
+        return ApiProblemBuilder
+            .slug("validation-error")
+            .title("Validation Error")
+            .status(HttpStatus.BAD_REQUEST)
+            .code(ErrorCodes.VALIDATION_ERROR)
+            .detail(exception.getMessage())
+            .userMessage("Nieprawidłowe dane formularza.")
+            .action("Popraw wskazane pola i spróbuj ponownie.")
+            .validationErrors(exception.getErrors())
+            .retryable(false)
+            .toResponseEntity(request);
+    }
 
     private ResponseEntity<ApiProblemResponse> invalidQueryParametersResponse(
         String detail,
@@ -167,7 +187,6 @@ public class GlobalExceptionHandler {
     private String parameterName(ParameterValidationResult result) {
         return result.getMethodParameter().getParameterName();
     }
-
 
     /**
      * Fallback dla nieprzewidzianych błędów aplikacji.

@@ -5,12 +5,16 @@ import com.drobnyd.drobnyd.dto.ApiResponse;
 import com.drobnyd.drobnyd.dto.ApiPageResponse;
 import com.drobnyd.drobnyd.dto.ApiPageMeta;
 import com.drobnyd.drobnyd.dto.PageResult;
+import com.drobnyd.drobnyd.dto.PrintingPointRequest;
 import com.drobnyd.drobnyd.dto.PrintingPointResponse;
 import com.drobnyd.drobnyd.common.ApiPaginationLinks;
 import com.drobnyd.drobnyd.service.PrintingPointService;
+import com.drobnyd.drobnyd.validation.PrintingPointValidator;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.Instant;
@@ -19,9 +23,14 @@ import java.time.Instant;
 @RequestMapping("/api/v1/printing-points")
 public class PrintingPointController {
     private final PrintingPointService printingPointService;
+    private final PrintingPointValidator printingPointValidator;
 
-    public PrintingPointController(PrintingPointService printingPointService) {
+    public PrintingPointController(
+        PrintingPointService printingPointService,
+        PrintingPointValidator printingPointValidator
+    ) {
         this.printingPointService = printingPointService;
+        this.printingPointValidator = printingPointValidator;
     }
 
     @GetMapping
@@ -58,6 +67,41 @@ public class PrintingPointController {
     ) {
         return new ApiResponse<>(
             printingPointService.findById(printingPointId),
+            new ApiMeta(
+                getRequestId(request),
+                Instant.now()
+            )
+        );
+    }
+
+    @PostMapping
+    public ApiResponse<PrintingPointResponse> createPrintingPoint(
+        @Valid @RequestBody PrintingPointRequest printingPointRequest,
+        BindingResult bindingResult,
+        HttpServletRequest request
+    ) {
+        printingPointValidator.validate(printingPointRequest, bindingResult);
+
+        return new ApiResponse<>(
+            printingPointService.create(printingPointRequest),
+            new ApiMeta(
+                getRequestId(request),
+                Instant.now()
+            )
+        );
+    }
+
+    @PutMapping("/{printingPointId}")
+    public ApiResponse<PrintingPointResponse> updatePrintingPoint(
+        @PathVariable String printingPointId,
+        @Valid @RequestBody PrintingPointRequest printingPointRequest,
+        BindingResult bindingResult,
+        HttpServletRequest request
+    ) {
+        printingPointValidator.validate(printingPointRequest, bindingResult);
+
+        return new ApiResponse<>(
+            printingPointService.update(printingPointId, printingPointRequest),
             new ApiMeta(
                 getRequestId(request),
                 Instant.now()

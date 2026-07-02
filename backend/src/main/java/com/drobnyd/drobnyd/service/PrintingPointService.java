@@ -1,15 +1,18 @@
 package com.drobnyd.drobnyd.service;
 
 import com.drobnyd.drobnyd.dto.PageResult;
+import com.drobnyd.drobnyd.dto.PrintingPointRequest;
 import com.drobnyd.drobnyd.dto.PrintingPointResponse;
 import com.drobnyd.drobnyd.exception.ResourceNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @Service
 public class PrintingPointService {
+    private final AtomicInteger nextPrintingPointId = new AtomicInteger(3);
     private final List<PrintingPointResponse> printingPoints = new CopyOnWriteArrayList<>(List.of(
         new PrintingPointResponse(
                 1,
@@ -60,11 +63,55 @@ public class PrintingPointService {
             ));
     }
 
+    public PrintingPointResponse create(PrintingPointRequest request) {
+        PrintingPointResponse printingPoint = toResponse(
+            nextPrintingPointId.getAndIncrement(),
+            request
+        );
+
+        printingPoints.add(printingPoint);
+
+        return printingPoint;
+    }
+
+    public PrintingPointResponse update(
+        String printingPointId,
+        PrintingPointRequest request
+    ) {
+        PrintingPointResponse existingPrintingPoint = findById(printingPointId);
+        PrintingPointResponse updatedPrintingPoint = toResponse(
+            existingPrintingPoint.printingPointId(),
+            request
+        );
+
+        printingPoints.set(
+            printingPoints.indexOf(existingPrintingPoint),
+            updatedPrintingPoint
+        );
+
+        return updatedPrintingPoint;
+    }
+
     public Integer deleteById(String printingPointId) {
         PrintingPointResponse printingPoint = findById(printingPointId);
         printingPoints.remove(printingPoint);
 
         return printingPoint.printingPointId();
+    }
+
+    private PrintingPointResponse toResponse(
+        Integer printingPointId,
+        PrintingPointRequest request
+    ) {
+        return new PrintingPointResponse(
+            printingPointId,
+            request.name(),
+            request.streetAddress(),
+            request.city(),
+            request.postalCode(),
+            request.country(),
+            request.hourlyOrderLimit()
+        );
     }
 
     private boolean hasId(PrintingPointResponse point, String printingPointId) {
