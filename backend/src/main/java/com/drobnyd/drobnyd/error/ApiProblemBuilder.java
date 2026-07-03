@@ -15,7 +15,7 @@ import java.util.List;
 public final class ApiProblemBuilder {
 
     private static final String PROBLEM_BASE_URL =
-        "https://api.drobnyd.pl/problems/";
+        "https://api.polygraphic-centre.dev/problems/";
 
     private String slug;
     private String title;
