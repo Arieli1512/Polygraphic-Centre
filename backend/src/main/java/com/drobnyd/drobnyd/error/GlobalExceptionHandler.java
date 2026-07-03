@@ -26,23 +26,25 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * Endpoint istnieje, ale konkretny zasób nie został znaleziony.
-     * Na przykład: punkt druku o zadanym ID już nie istnieje.
+     * Domenowe wyjątki API, które same niosą pola kontraktu Problem Details.
      */
-    @ExceptionHandler(ResourceNotFoundException.class)
-    public ResponseEntity<ApiProblemResponse> handleResourceNotFoundException(
-        ResourceNotFoundException exception,
+    @ExceptionHandler(ApiException.class)
+    public ResponseEntity<ApiProblemResponse> handleApiException(
+        ApiException exception,
         HttpServletRequest request
     ) {
+        ProblemDescriptor descriptor = exception.getProblemDescriptor();
+
         return ApiProblemBuilder
-            .slug("resource-not-found")
-            .title("Resource Not Found")
-            .status(HttpStatus.NOT_FOUND)
-            .code(ErrorCodes.RESOURCE_NOT_FOUND)
+            .slug(descriptor.slug())
+            .title(descriptor.title())
+            .status(descriptor.status())
+            .code(descriptor.code())
             .detail(exception.getMessage())
-            .userMessage("Nie znaleziono wskazanego zasobu.")
-            .action("Sprawdź identyfikator i spróbuj ponownie.")
-            .retryable(false)
+            .userMessage(exception.getUserMessage())
+            .action(exception.getAction())
+            .validationErrors(exception.getErrors())
+            .retryable(exception.isRetryable())
             .toResponseEntity(request, traceContextProvider);
     }
 
@@ -145,27 +147,6 @@ public class GlobalExceptionHandler {
                     null
                 )
             ))
-            .retryable(false)
-            .toResponseEntity(request, traceContextProvider);
-    }
-
-    /**
-     * Nieprawidłowe dane formularza albo body requestu.
-     */
-    @ExceptionHandler(ValidationErrorException.class)
-    public ResponseEntity<ApiProblemResponse> handleInvalidRequest(
-        ValidationErrorException exception,
-        HttpServletRequest request
-    ) {
-        return ApiProblemBuilder
-            .slug("validation-error")
-            .title("Validation Error")
-            .status(HttpStatus.UNPROCESSABLE_ENTITY)
-            .code(ErrorCodes.VALIDATION_ERROR)
-            .detail(exception.getMessage())
-            .userMessage("Nieprawidłowe dane formularza.")
-            .action("Popraw wskazane pola i spróbuj ponownie.")
-            .validationErrors(exception.getErrors())
             .retryable(false)
             .toResponseEntity(request, traceContextProvider);
     }

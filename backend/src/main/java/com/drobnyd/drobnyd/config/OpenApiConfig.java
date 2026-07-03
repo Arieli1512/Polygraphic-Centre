@@ -59,10 +59,13 @@ public class OpenApiConfig {
                     "ProblemDetails",
                     badRequestExample()
                 ))
-                .addResponses("Unauthorized", problemResponse(
+                .addResponses("Unauthorized", problemResponseExamples(
                     "Unauthorized",
                     "ProblemDetails",
-                    unauthorizedExample()
+                    examples(
+                        "invalidToken", unauthorizedExample(),
+                        "expiredToken", authTokenExpiredExample()
+                    )
                 ))
                 .addResponses("Forbidden", problemResponse(
                     "Forbidden",
@@ -74,20 +77,17 @@ public class OpenApiConfig {
                     "ProblemDetails",
                     notFoundExample()
                 ))
-                .addResponses("Conflict", problemResponse(
+                .addResponses("Conflict", problemResponseExamples(
                     "Conflict",
                     "ProblemDetails",
-                    conflictExample()
+                    examples(
+                        "conflict", conflictExample()
+                    )
                 ))
                 .addResponses("ValidationError", problemResponse(
                     "Validation error",
                     "ValidationProblemDetails",
                     validationErrorExample()
-                ))
-                .addResponses("TooManyRequests", problemResponse(
-                    "Too many requests",
-                    "ProblemDetails",
-                    tooManyRequestsExample()
                 ))
                 .addResponses("InternalError", problemResponse(
                     "Internal server error",
@@ -188,12 +188,48 @@ public class OpenApiConfig {
         String schemaName,
         Map<String, Object> example
     ) {
+        return problemResponseExamples(
+            description,
+            schemaName,
+            examples("default", example)
+        );
+    }
+
+    private ApiResponse problemResponseExamples(
+        String description,
+        String schemaName,
+        Map<String, Map<String, Object>> examples
+    ) {
+        io.swagger.v3.oas.models.media.MediaType mediaType =
+            new io.swagger.v3.oas.models.media.MediaType().schema(ref(schemaName));
+
+        examples.forEach((name, example) -> mediaType.addExamples(
+            name,
+            new Example().value(example)
+        ));
+
         return new ApiResponse()
             .description(description)
             .content(new io.swagger.v3.oas.models.media.Content()
-                .addMediaType(PROBLEM_JSON, new io.swagger.v3.oas.models.media.MediaType()
-                    .schema(ref(schemaName))
-                    .addExamples("default", new Example().value(example))));
+                .addMediaType(PROBLEM_JSON, mediaType));
+    }
+
+    private Map<String, Map<String, Object>> examples(
+        String firstName,
+        Map<String, Object> firstExample,
+        Object... rest
+    ) {
+        Map<String, Map<String, Object>> examples = new java.util.LinkedHashMap<>();
+        examples.put(firstName, firstExample);
+
+        for (int index = 0; index < rest.length; index += 2) {
+            examples.put(
+                (String) rest[index],
+                (Map<String, Object>) rest[index + 1]
+            );
+        }
+
+        return examples;
     }
 
     private Map<String, Object> badRequestExample() {
@@ -227,6 +263,19 @@ public class OpenApiConfig {
         );
     }
 
+    private Map<String, Object> authTokenExpiredExample() {
+        return problemExample(
+            "auth-token-expired",
+            "Unauthorized",
+            401,
+            "Authentication token has expired.",
+            "/api/v1/printing-points",
+            "AUTH_TOKEN_EXPIRED",
+            "Twoja sesja wygasła.",
+            "Zaloguj się ponownie i spróbuj jeszcze raz."
+        );
+    }
+
     private Map<String, Object> forbiddenExample() {
         return problemExample(
             "access-denied",
@@ -255,18 +304,18 @@ public class OpenApiConfig {
 
     private Map<String, Object> conflictExample() {
         return problemExample(
-            "order-status-transition-not-allowed",
-            "Order Transition Not Allowed",
+            "conflict",
+            "Conflict",
             409,
-            "Order status transition is not allowed.",
-            "/api/v1/orders/ord_01JX9YQ4/status",
-            "ORDER_STATUS_TRANSITION_NOT_ALLOWED",
-            "Nie można wykonać tej zmiany statusu zamówienia.",
-            "Odśwież widok zamówienia i sprawdź jego aktualny status.",
+            "Requested operation conflicts with current resource state.",
+            "/api/v1/printing-points/1",
+            "CONFLICT",
+            "Nie można wykonać tej operacji w obecnym stanie zasobu.",
+            "Odśwież dane i spróbuj ponownie.",
             List.of(Map.of(
-                "field", "status",
-                "issue", "transition from READY to APPROVED is forbidden",
-                "userHint", "Skontaktuj się z obsługą, jeśli to wygląda na pomyłkę."
+                "field", "id",
+                "issue", "resource state conflict",
+                "userHint", "Sprawdź aktualny stan zasobu."
             ))
         );
     }
@@ -293,20 +342,6 @@ public class OpenApiConfig {
                     "userHint", "Limit zamówień musi być większy od zera."
                 )
             )
-        );
-    }
-
-    private Map<String, Object> tooManyRequestsExample() {
-        return problemExample(
-            "too-many-requests",
-            "Too Many Requests",
-            429,
-            "Request rate limit exceeded.",
-            "/api/v1/printing-points",
-            "TOO_MANY_REQUESTS",
-            "Przekroczono limit zapytań.",
-            "Odczekaj chwilę i spróbuj ponownie.",
-            true
         );
     }
 

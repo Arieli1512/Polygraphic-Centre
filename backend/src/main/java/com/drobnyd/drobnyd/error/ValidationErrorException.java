@@ -4,16 +4,13 @@ import com.drobnyd.drobnyd.api.ApiFieldError;
 
 import java.util.List;
 
-public class ValidationErrorException extends RuntimeException {
-
-    private final List<ApiFieldError> errors;
+public class ValidationErrorException extends ApiException {
 
     public ValidationErrorException(List<ApiFieldError> errors) {
-        super("Invalid request body.");
-        this.errors = errors;
-    }
-
-    public List<ApiFieldError> getErrors() {
-        return errors;
+        super(
+            ProblemDescriptor.VALIDATION_ERROR,
+            "Invalid request body.",
+            errors
+        );
     }
 }
