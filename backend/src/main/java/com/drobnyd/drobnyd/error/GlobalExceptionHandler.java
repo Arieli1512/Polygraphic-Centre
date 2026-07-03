@@ -6,6 +6,7 @@ import com.drobnyd.drobnyd.api.ApiFieldError;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.method.ParameterValidationResult;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -26,7 +27,9 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * Domenowe wyjątki API, które same niosą pola kontraktu Problem Details.
+     * Obsługuje kontrolowane wyjątki aplikacyjne.
+     * Każdy ApiException wskazuje ProblemDescriptor, a opcjonalnie przenosi dynamiczne dane,
+     * takie jak detail, action override albo lista błędów pól.
      */
     @ExceptionHandler(ApiException.class)
     public ResponseEntity<ApiProblemResponse> handleApiException(
@@ -49,7 +52,8 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * Ścieżka API nie istnieje, np. literówka w URL.
+     * Obsługuje żądania do nieistniejącej ścieżki API.
+     * To nie jest brak zasobu domenowego, tylko literówka albo nieaktualny adres endpointu.
      */
     @ExceptionHandler(NoResourceFoundException.class)
     public ResponseEntity<ApiProblemResponse> handleNoResourceFoundException(
@@ -69,8 +73,9 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * Nieprawidłowe query params wykryte przez Bean Validation.
-     * Akumuluje wszystkie naruszenia z walidacji parametrów metody.
+     * Obsługuje walidację parametrów metody kontrolera, najczęściej query params.
+     * Przykład: page=-1 albo size=500 przy adnotacjach @Min/@Max.
+     * Zbiera wszystkie naruszenia, żeby klient dostał pełną listę problemów.
      */
     @ExceptionHandler(HandlerMethodValidationException.class)
     public ResponseEntity<ApiProblemResponse> handleHandlerMethodValidation(
@@ -96,8 +101,7 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * Brakuje wymaganego parametru query w adresie URL.
-     * Na przykład: endpoint wymaga `city`, ale klient go nie przesłał.
+     * Obsługuje brak wymaganego parametru query.
      */
     @ExceptionHandler(MissingServletRequestParameterException.class)
     public ResponseEntity<ApiProblemResponse> handleMissingServletRequestParameter(
@@ -124,8 +128,8 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * Parametr query ma nieprawidłowy typ lub format.
-     * Na przykład: `page=abc`, gdy oczekiwany jest `int`.
+     * Obsługuje query params, których Spring nie potrafi przekonwertować na oczekiwany typ.
+     * Przykład: page=abc, gdy kontroler oczekuje int.
      */
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     public ResponseEntity<ApiProblemResponse> handleMethodArgumentTypeMismatch(
@@ -147,6 +151,27 @@ public class GlobalExceptionHandler {
                     null
                 )
             ))
+            .retryable(false)
+            .toResponseEntity(request, traceContextProvider);
+    }
+
+    /**
+     * Obsługuje niepoprawne body requestu przed uruchomieniem Bean Validation.
+     * Przykład: błędny JSON, pusty body przy @RequestBody albo wartość, której nie da się zmapować na DTO.
+     */
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ApiProblemResponse> handleHttpMessageNotReadable(
+        HttpMessageNotReadableException exception,
+        HttpServletRequest request
+    ) {
+        return ApiProblemBuilder
+            .slug("invalid-request-body")
+            .title("Invalid Request Body")
+            .status(HttpStatus.BAD_REQUEST)
+            .code(ErrorCodes.INVALID_REQUEST_BODY)
+            .detail("Request body is missing or malformed.")
+            .userMessage("Treść żądania jest nieprawidłowa.")
+            .action("Popraw JSON w body requestu i spróbuj ponownie.")
             .retryable(false)
             .toResponseEntity(request, traceContextProvider);
     }
@@ -174,8 +199,8 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * Fallback dla nieprzewidzianych błędów aplikacji.
-     * Tak, żeby wszystkie błędy były zgodne z kontraktem API.
+     * Ostatnia linia obrony dla nieprzewidzianych błędów.
+     * Nie ujawnia szczegółów technicznych klientowi, ale nadal zwraca odpowiedź zgodną z Problem Details.
      */
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiProblemResponse> handleUnknownException(

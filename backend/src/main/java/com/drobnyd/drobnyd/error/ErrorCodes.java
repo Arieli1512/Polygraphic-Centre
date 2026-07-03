@@ -11,6 +11,7 @@ public final class ErrorCodes {
     public static final String EXTERNAL_SERVICE_UNAVAILABLE = "EXTERNAL_SERVICE_UNAVAILABLE";
     public static final String INTERNAL_ERROR = "INTERNAL_ERROR";
     public static final String INVALID_QUERY_PARAMETERS = "INVALID_QUERY_PARAMETERS";
+    public static final String INVALID_REQUEST_BODY = "INVALID_REQUEST_BODY";
 
     private ErrorCodes() {
     }
