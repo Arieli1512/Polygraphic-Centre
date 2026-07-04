@@ -24,6 +24,27 @@ import lombok.ToString;
 @ToString(onlyExplicitlyIncluded = true)
 public class PrintSettings {
 
+    public static PrintSettings forOrder(
+            Order order,
+            String format,
+            String paperType,
+            PrintColorMode colorMode,
+            PrintDuplex duplex,
+            PrintOrientation orientation,
+            PrintFinishing finishing,
+            Integer copies) {
+        PrintSettings printSettings = new PrintSettings();
+        printSettings.setOrder(order);
+        printSettings.setFormat(format);
+        printSettings.setPaperType(paperType);
+        printSettings.setColorMode(colorMode);
+        printSettings.setDuplex(duplex);
+        printSettings.setOrientation(orientation);
+        printSettings.setFinishing(finishing);
+        printSettings.setCopies(copies);
+        return printSettings;
+    }
+
     @Id
     @Column(name = "order_id", nullable = false, updatable = false)
     @ToString.Include

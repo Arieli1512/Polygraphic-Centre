@@ -1,16 +1,16 @@
-import React from "react";
-import { Box, Typography, Paper } from "@mui/material";
+import { Typography, Paper, Stack } from "@mui/material";
 
-const ClientPanel: React.FC = () => {
+export default function ClientPanel() {
   return (
-    <Box>
-      <Paper sx={{ p: 4 }}>
-        <Typography variant="h5">Client Panel (skeleton)</Typography>
-        <Typography paragraph>Here you'll see your orders, wallet and the flow to create a new order.</Typography>
-      </Paper>
-    </Box>
+    <Paper sx={{ p: { xs: 3, md: 4 } }}>
+      <Stack spacing={1.5}>
+        <Typography variant="h4" component="h1">Panel klienta</Typography>
+        <Typography color="text.secondary">
+          Tutaj zobaczysz historię zamówień, saldo portfela i kolejne kroki tworzenia nowego
+          zamówienia.
+        </Typography>
+      </Stack>
+    </Paper>
   );
-};
-
-export default ClientPanel;
+}
 

@@ -27,6 +27,13 @@ import lombok.ToString;
 @ToString(onlyExplicitlyIncluded = true)
 public class WalletTopUp {
 
+    public static WalletTopUp recordFor(Wallet wallet, long amount) {
+        WalletTopUp topUp = new WalletTopUp();
+        topUp.setWallet(wallet);
+        topUp.setAmount(amount);
+        return topUp;
+    }
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "top_up_id", nullable = false, updatable = false)

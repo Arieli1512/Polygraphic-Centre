@@ -7,6 +7,7 @@ spring.datasource.username=drobnyd
 spring.datasource.password=change-me
 
 # Firebase Admin SDK
+firebase.admin.use-application-default-credentials=false
 firebase.admin.service-account-resource=firebase-service-account.json
 
 # Session auth (HttpOnly cookies + refresh token)
@@ -17,6 +18,18 @@ app.auth.refresh-token-ttl-days=7
 app.auth.cookie-path=/
 app.auth.cookie-secure=false
 app.auth.cookie-same-site=Lax
+
+# CORS + trace propagation
+app.cors.allowed-origins=http://localhost:5173
+app.cors.allowed-methods=GET,POST,PUT,PATCH,DELETE,OPTIONS
+app.cors.allowed-headers=Authorization,Content-Type,x-request-id,traceparent,tracestate,X-XSRF-TOKEN
+app.cors.allow-credentials=true
+
+app.tracing.request-id-header=x-request-id
+app.tracing.traceparent-header=traceparent
+app.tracing.tracestate-header=tracestate
+app.tracing.request-id-mdc-key=requestId
+app.tracing.trace-id-mdc-key=traceId
 
 # Google Cloud Storage
 gcs.project-id=your-gcp-project-id

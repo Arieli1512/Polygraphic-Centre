@@ -1,16 +1,16 @@
-import React from "react";
-import { Box, Typography, Paper } from "@mui/material";
+import { Typography, Paper, Stack } from "@mui/material";
 
-const EmployeeQueue: React.FC = () => {
+export default function EmployeeQueue() {
   return (
-    <Box>
-      <Paper sx={{ p: 4 }}>
-        <Typography variant="h5">Employee Queue (skeleton)</Typography>
-        <Typography paragraph>List of active orders for the printing point.</Typography>
-      </Paper>
-    </Box>
+    <Paper sx={{ p: { xs: 3, md: 4 } }}>
+      <Stack spacing={1.5}>
+        <Typography variant="h4" component="h1">Kolejka pracownika</Typography>
+        <Typography color="text.secondary">
+          Widok aktywnych zamówień dla przypisanego punktu druku z sortowaniem po terminie
+          odbioru.
+        </Typography>
+      </Stack>
+    </Paper>
   );
-};
-
-export default EmployeeQueue;
+}
 

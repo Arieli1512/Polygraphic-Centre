@@ -4,42 +4,35 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.Date;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.JWTVerifier;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.interfaces.DecodedJWT;
+import com.drobnyd.drobnyd.config.properties.AuthProperties;
 
 @Service
 public class AuthTokenService {
 
     private static final String TOKEN_TYPE_ACCESS = "access";
     private static final String TOKEN_TYPE_REFRESH = "refresh";
+    private final AuthProperties authProperties;
 
-    @Value("${app.auth.jwt-secret:polygraphic-centre-dev-secret}")
-    private String jwtSecret;
-
-    @Value("${app.auth.issuer:polygraphic-centre}")
-    private String issuer;
-
-    @Value("${app.auth.access-token-ttl-minutes:15}")
-    private long accessTokenTtlMinutes;
-
-    @Value("${app.auth.refresh-token-ttl-days:7}")
-    private long refreshTokenTtlDays;
+    public AuthTokenService(AuthProperties authProperties) {
+        this.authProperties = authProperties;
+    }
 
     private Algorithm algorithm() {
-        return Algorithm.HMAC256(jwtSecret);
+        return Algorithm.HMAC256(authProperties.jwtSecret());
     }
 
     public String createAccessToken(SessionUser user) {
-        return createToken(user, Duration.ofMinutes(accessTokenTtlMinutes), TOKEN_TYPE_ACCESS);
+        return createToken(user, Duration.ofMinutes(authProperties.accessTokenTtlMinutes()), TOKEN_TYPE_ACCESS);
     }
 
     public String createRefreshToken(SessionUser user) {
-        return createToken(user, Duration.ofDays(refreshTokenTtlDays), TOKEN_TYPE_REFRESH);
+        return createToken(user, Duration.ofDays(authProperties.refreshTokenTtlDays()), TOKEN_TYPE_REFRESH);
     }
 
     public DecodedJWT verifyAccessToken(String token) {
@@ -54,7 +47,7 @@ public class AuthTokenService {
         Instant now = Instant.now();
         Instant expiresAt = now.plus(ttl);
         var builder = JWT.create()
-                .withIssuer(issuer)
+                .withIssuer(authProperties.issuer())
                 .withSubject(user.firebaseUid())
                 .withIssuedAt(Date.from(now))
                 .withExpiresAt(Date.from(expiresAt))
@@ -73,14 +66,15 @@ public class AuthTokenService {
 
     private JWTVerifier verifier(String tokenType) {
         return JWT.require(algorithm())
-                .withIssuer(issuer)
+                .withIssuer(authProperties.issuer())
                 .withClaim("tokenType", tokenType)
                 .build();
     }
 
     public SessionUser toSessionUser(DecodedJWT jwt) {
         Integer localId = jwt.getClaim("localId").isNull() ? null : jwt.getClaim("localId").asInt();
-        Integer printingPointId = jwt.getClaim("printingPointId").isNull() ? null : jwt.getClaim("printingPointId").asInt();
+        Integer printingPointId = jwt.getClaim("printingPointId").isNull() ? null
+                : jwt.getClaim("printingPointId").asInt();
         return new SessionUser(
                 localId,
                 jwt.getSubject(),
@@ -88,11 +82,7 @@ public class AuthTokenService {
                 jwt.getClaim("displayName").asString(),
                 jwt.getClaim("accountType").asString(),
                 jwt.getClaim("role").asString(),
-                printingPointId
-        );
+                printingPointId);
     }
 
 }
-
-
-

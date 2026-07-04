@@ -6,6 +6,7 @@ import SignUpPage from "../pages/SignUpPage";
 import ClientPanel from "../pages/ClientPanel";
 import EmployeeQueue from "../pages/EmployeeQueue";
 import ManagerSettings from "../pages/ManagerSettings";
+import AdminPanel from "../pages/AdminPanel";
 import AppLayout from "../components/layout/AppLayout";
 import { useAuth } from "../contexts/AuthContext";
 import CircularProgress from "@mui/material/CircularProgress";
@@ -13,6 +14,11 @@ import Box from "@mui/material/Box";
 
 interface RequireAuthProps {
   readonly children: ReactNode;
+}
+
+interface RequireRoleProps {
+  readonly children: ReactNode;
+  readonly allowedRoles: Array<"CLIENT" | "EMPLOYEE" | "ADMIN">;
 }
 
 function RequireAuth({ children }: RequireAuthProps) {
@@ -30,6 +36,16 @@ function RequireAuth({ children }: RequireAuthProps) {
   return <>{children}</>;
 }
 
+function RequireRole({ children, allowedRoles }: RequireRoleProps) {
+  const { user } = useAuth();
+
+  if (!user || !allowedRoles.includes(user.role)) {
+    return <Navigate to="/" replace />;
+  }
+
+  return <>{children}</>;
+}
+
 export default function AppRouter() {
   return (
     <BrowserRouter>
@@ -44,7 +60,9 @@ export default function AppRouter() {
             path="client/*"
             element={
               <RequireAuth>
-                <ClientPanel />
+                <RequireRole allowedRoles={["CLIENT"]}>
+                  <ClientPanel />
+                </RequireRole>
               </RequireAuth>
             }
           />
@@ -52,7 +70,9 @@ export default function AppRouter() {
             path="employee/*"
             element={
               <RequireAuth>
-                <EmployeeQueue />
+                <RequireRole allowedRoles={["EMPLOYEE", "ADMIN"]}>
+                  <EmployeeQueue />
+                </RequireRole>
               </RequireAuth>
             }
           />
@@ -60,7 +80,19 @@ export default function AppRouter() {
             path="manager/*"
             element={
               <RequireAuth>
-                <ManagerSettings />
+                <RequireRole allowedRoles={["ADMIN"]}>
+                  <ManagerSettings />
+                </RequireRole>
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="admin/*"
+            element={
+              <RequireAuth>
+                <RequireRole allowedRoles={["ADMIN"]}>
+                  <AdminPanel />
+                </RequireRole>
               </RequireAuth>
             }
           />

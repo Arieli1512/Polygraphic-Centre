@@ -16,34 +16,46 @@ The project is configured to use the Gradle wrapper, so you do not need to insta
 
 1. Install Java 25 JDK.
    - Ubuntu/Debian:
+
      ```bash
      sudo apt update
      sudo apt install openjdk-25-jdk
      ```
+
    - Fedora/RHEL:
+
      ```bash
      sudo dnf install java-25-openjdk-devel
      ```
+
 2. Verify Java version:
+
    ```bash
    java -version
    ```
+
    It should report a Java 25 runtime.
 
 ### macOS
 
 1. Install Java 25 JDK via Homebrew:
+
    ```bash
    brew install openjdk@25
    ```
+
 2. Add Java 25 to your shell environment if needed:
+
    ```bash
    sudo ln -sfn /opt/homebrew/opt/openjdk@25/libexec/openjdk.jdk /Library/Java/JavaVirtualMachines/openjdk-25.jdk
    ```
+
 3. Verify Java version:
+
    ```bash
    java -version
    ```
+
    It should report Java 25.
 
 ### Windows
@@ -52,14 +64,39 @@ The project is configured to use the Gradle wrapper, so you do not need to insta
 2. Set `JAVA_HOME` to the JDK install folder.
 3. Add `%JAVA_HOME%\bin` to your `PATH`.
 4. Verify the installation in PowerShell or Command Prompt:
+
    ```powershell
    java -version
    ```
+
    It should report Java 25.
 
 ## Build and Run
 
 Open a terminal in the `backend` folder.
+
+## Container Image
+
+The backend now includes a production `Dockerfile` that builds the Spring Boot jar in a multi-stage image and runs it with the `prod` profile.
+
+Build it locally from the `backend` folder:
+
+```bash
+docker build -t polygraphic-centre-backend .
+```
+
+Run it locally with explicit runtime configuration:
+
+```bash
+docker run --rm -p 8080:8080 \
+   -e SPRING_PROFILES_ACTIVE=prod \
+   -e DB_URL=jdbc:postgresql://host.docker.internal:5433/drobnyd \
+   -e DB_USERNAME=drobnyd \
+   -e DB_PASSWORD=change-me \
+   -e APP_AUTH_JWT_SECRET=change-me \
+   -e APP_CORS_ALLOWED_ORIGINS=http://localhost:5173 \
+   polygraphic-centre-backend
+```
 
 ## Configuration
 
@@ -69,7 +106,14 @@ The local properties file is the place for non-secret development defaults such 
 
 For the local PostgreSQL instance launched from `db/scripts-podman/`, the backend expects the database to be reachable on `localhost:5433`.
 
-If you prefer environment variables instead of a local properties file, Spring Boot can read them directly, for example `SPRING_DATASOURCE_URL` or `FIREBASE_ADMIN_SERVICE_ACCOUNT_RESOURCE`.
+If you prefer environment variables instead of a local properties file, Spring Boot can read them directly, for example `SPRING_DATASOURCE_URL`.
+
+In the `prod` profile the application is Cloud Run-friendly:
+
+- It binds to `PORT` automatically.
+- Firebase Admin uses Application Default Credentials by default.
+- The image does not require `firebase-service-account.json`.
+- Secrets should be injected at runtime, not copied into the image.
 
 ### Podman-based local database
 
@@ -105,14 +149,19 @@ The application will start on `http://localhost:8080` by default.
 ## Common Gradle commands
 
 - Build the project:
+
   ```bash
   ./gradlew build
   ```
+
 - Run tests:
+
   ```bash
   ./gradlew test
   ```
+
 - Start the application:
+
   ```bash
   ./gradlew bootRun
   ```
@@ -123,4 +172,6 @@ The application will start on `http://localhost:8080` by default.
 - If you prefer not to install Gradle globally, use the included wrapper scripts (`gradlew` / `gradlew.bat`).
 - If you see a Java version mismatch, confirm that the `java` command points to Java 25 and not an older version.
 - Use `application-local.properties` for local-only defaults and environment variables for secrets or deployment-specific values.
-- The Firebase Admin SDK service-account file is expected on the classpath by default as `firebase-service-account.json`.
+- Keep `src/main/resources/firebase-service-account.json` local-only. Do not copy it into a container image or publish it through CI.
+- The current codebase does not yet implement Google Cloud Storage signed URL generation.
+- The current codebase does not yet implement a Pub/Sub push webhook endpoint or Pub/Sub publisher client.

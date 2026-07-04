@@ -28,6 +28,14 @@ import lombok.ToString;
 @ToString(onlyExplicitlyIncluded = true)
 public class Wallet {
 
+    public static Wallet initialize(Client client) {
+        Wallet wallet = new Wallet();
+        wallet.setClient(client);
+        wallet.setBalance(0L);
+        wallet.setStatus(WalletStatus.ACTIVE);
+        return wallet;
+    }
+
     @Id
     @Column(name = "client_id", nullable = false, updatable = false)
     @ToString.Include

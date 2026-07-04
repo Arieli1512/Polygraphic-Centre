@@ -30,6 +30,24 @@ import lombok.ToString;
 @ToString(onlyExplicitlyIncluded = true)
 public class Order {
 
+    public static Order pending(
+            PrintingPoint printingPoint,
+            Client client,
+            String filePath,
+            Integer pageCount,
+            Long totalPrice,
+            OffsetDateTime pickupAt) {
+        Order order = new Order();
+        order.setPrintingPoint(printingPoint);
+        order.setClient(client);
+        order.setFilePath(filePath);
+        order.setPageCount(pageCount);
+        order.setTotalPrice(totalPrice);
+        order.setPickupAt(pickupAt);
+        order.setStatus(OrderStatus.PENDING);
+        return order;
+    }
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "order_id", nullable = false, updatable = false)

@@ -1,16 +1,16 @@
-import React from "react";
-import { Box, Typography, Paper } from "@mui/material";
+import { Typography, Paper, Stack } from "@mui/material";
 
-const ManagerSettings: React.FC = () => {
+export default function ManagerSettings() {
   return (
-    <Box>
-      <Paper sx={{ p: 4 }}>
-        <Typography variant="h5">Manager Settings (skeleton)</Typography>
-        <Typography paragraph>Pricing, opening hours and other management screens.</Typography>
-      </Paper>
-    </Box>
+    <Paper sx={{ p: { xs: 3, md: 4 } }}>
+      <Stack spacing={1.5}>
+        <Typography variant="h4" component="h1">Ustawienia menedżera</Typography>
+        <Typography color="text.secondary">
+          Szkielet obszaru konfiguracji punktu druku: cennik, godziny otwarcia i ustawienia
+          operacyjne.
+        </Typography>
+      </Stack>
+    </Paper>
   );
-};
-
-export default ManagerSettings;
+}
 

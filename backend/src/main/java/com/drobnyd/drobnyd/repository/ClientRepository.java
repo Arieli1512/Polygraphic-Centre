@@ -9,4 +9,6 @@ import com.drobnyd.drobnyd.entity.Client;
 public interface ClientRepository extends JpaRepository<Client, Integer> {
 
 	Optional<Client> findByFirebaseUid(@org.jspecify.annotations.NonNull String firebaseUid);
+
+	Optional<Client> findByEmail(@org.jspecify.annotations.NonNull String email);
 }
