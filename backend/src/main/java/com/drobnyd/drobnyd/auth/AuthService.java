@@ -9,10 +9,12 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.drobnyd.drobnyd.entity.Client;
 import com.drobnyd.drobnyd.entity.Operator;
+import com.drobnyd.drobnyd.entity.Wallet;
 import com.drobnyd.drobnyd.exception.AccountLinkException;
 import com.drobnyd.drobnyd.exception.AuthenticationFailedException;
 import com.drobnyd.drobnyd.repository.ClientRepository;
 import com.drobnyd.drobnyd.repository.OperatorRepository;
+import com.drobnyd.drobnyd.repository.WalletRepository;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.auth.FirebaseToken;
@@ -33,14 +35,17 @@ public class AuthService {
 
     private final ClientRepository clientRepository;
     private final OperatorRepository operatorRepository;
+    private final WalletRepository walletRepository;
     private final AuthTokenService authTokenService;
 
     public AuthService(
             ClientRepository clientRepository,
             OperatorRepository operatorRepository,
+            WalletRepository walletRepository,
             AuthTokenService authTokenService) {
         this.clientRepository = clientRepository;
         this.operatorRepository = operatorRepository;
+        this.walletRepository = walletRepository;
         this.authTokenService = authTokenService;
     }
 
@@ -131,6 +136,7 @@ public class AuthService {
         log.info("Provisioning new Client account for Firebase UID: {} (email: {})", firebaseUid, email);
         String[] names = splitDisplayName(displayName);
         Client savedClient = clientRepository.save(Client.provisioned(firebaseUid, email, names[0], names[1]));
+        walletRepository.save(Wallet.initialize(savedClient));
         log.info("New Client account created with ID: {}", savedClient.getClientId());
         return toClientSessionUser(savedClient);
     }
