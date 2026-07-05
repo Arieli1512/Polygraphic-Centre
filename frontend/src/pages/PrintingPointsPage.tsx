@@ -64,7 +64,7 @@ export default function PrintingPointsPage() {
   return (
     <Stack spacing={2.5}>
       <Typography variant="overline" color="text.secondary">
-        4.1 Przegladanie drukarni
+        Przegladanie drukarni
       </Typography>
       <Typography variant="h4" component="h1">
         Dostepne drukarnie
@@ -75,7 +75,6 @@ export default function PrintingPointsPage() {
 
       <Stack direction={{ xs: "column", sm: "row" }} spacing={1.25}>
         <Button variant="contained" onClick={() => nav("/estimate")}>Przejdz do kalkulatora</Button>
-        <Button variant="outlined" onClick={() => nav("/signup")}>Zaloz konto klienta</Button>
       </Stack>
 
       {error && <Alert severity="error">{error}</Alert>}

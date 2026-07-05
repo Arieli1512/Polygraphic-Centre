@@ -72,7 +72,7 @@ export default function ClientOrderDetailsPage() {
   if (!order) {
     return (
       <Stack spacing={1.5}>
-        <Typography variant="h5" component="h2">4.7 Szczegoly zamowienia</Typography>
+        <Typography variant="h5" component="h2">Szczegoly zamowienia</Typography>
         {error ? <Alert severity="error">{error}</Alert> : <Typography>Ladowanie danych...</Typography>}
       </Stack>
     );

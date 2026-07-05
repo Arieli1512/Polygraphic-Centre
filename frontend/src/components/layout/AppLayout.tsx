@@ -16,6 +16,7 @@ import { useAuth } from "../../contexts/AuthContext";
 interface NavigationItem {
   label: string;
   path: string;
+  exact?: boolean;
 }
 
 const DRAWER_WIDTH = 260;
@@ -30,7 +31,7 @@ function buildNavigationItems(role: "CLIENT" | "EMPLOYEE" | "ADMIN" | undefined)
   if (role === "CLIENT") {
     return [
       ...common,
-      { label: "Panel klienta", path: "/client" },
+      { label: "Panel klienta", path: "/client", exact: true },
       { label: "Nowe zamowienie", path: "/client/orders/new" },
       { label: "Historia zamowien", path: "/client/orders" },
     ];
@@ -73,8 +74,9 @@ export default function AppLayout() {
       </Box>
       <List sx={{ px: 1 }}>
         {navigationItems.map((item) => {
-          const isActive =
-            item.path === "/"
+          const isActive = item.exact
+            ? location.pathname === item.path
+            : item.path === "/"
               ? location.pathname === "/"
               : location.pathname === item.path || location.pathname.startsWith(`${item.path}/`);
 

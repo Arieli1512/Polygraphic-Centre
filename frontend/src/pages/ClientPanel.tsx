@@ -23,7 +23,7 @@ export default function ClientPanel() {
         <Stack spacing={1.5}>
           <Typography variant="h4" component="h1">Panel klienta</Typography>
           <Typography color="text.secondary">
-            Przeplyw sekcji 4: wybierz drukarnie, policz estymacje, przeslij plik i zloz zamowienie.
+            Wybierz drukarnie, policz estymacje, przeslij plik i zloz zamowienie.
           </Typography>
 
           <Stack direction={{ xs: "column", md: "row" }} spacing={1}>

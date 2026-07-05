@@ -163,7 +163,7 @@ export default function AdminPanel() {
   const togglePointSkeleton = async (printingPointId: number, enabled: boolean) => {
     await run(async () => {
       const result = await toggleAdminPrintingPointSkeleton(printingPointId, enabled);
-      setSuccess(`6.4 skeleton: ${result.note}`);
+      setSuccess(`Tryb szkieletowy: ${result.note}`);
     }, "Przelaczono status drukarni w trybie szkieletowym.");
   };
 
@@ -221,7 +221,7 @@ export default function AdminPanel() {
     <Stack spacing={2}>
       <Paper sx={{ p: { xs: 3, md: 4 } }}>
         <Stack spacing={1.5}>
-          <Typography variant="h4" component="h1">6.4-6.7 Panel administratora</Typography>
+          <Typography variant="h4" component="h1">Panel administratora</Typography>
           <Typography color="text.secondary">
             Zarzadzanie drukarniami i personelem oraz generowanie raportow przekrojowych.
           </Typography>
@@ -233,7 +233,7 @@ export default function AdminPanel() {
 
       <Paper sx={{ p: { xs: 2.5, md: 3 } }}>
         <Stack spacing={2}>
-          <Typography variant="h6">6.4 Zarzadzanie drukarniami (szkielet + CRUD)</Typography>
+          <Typography variant="h6">Zarzadzanie drukarniami (szkielet + CRUD)</Typography>
 
           <Table size="small">
             <TableHead>
@@ -309,7 +309,7 @@ export default function AdminPanel() {
 
       <Paper sx={{ p: { xs: 2.5, md: 3 } }}>
         <Stack spacing={2}>
-          <Typography variant="h6">6.5 Zarzadzanie personelem</Typography>
+          <Typography variant="h6">Zarzadzanie personelem</Typography>
 
           <Stack direction={{ xs: "column", md: "row" }} spacing={1.25}>
             <TextField
@@ -366,7 +366,7 @@ export default function AdminPanel() {
 
       <Paper sx={{ p: { xs: 2.5, md: 3 } }}>
         <Stack spacing={2}>
-          <Typography variant="h6">6.6 + 6.7 Raportowanie administratora</Typography>
+          <Typography variant="h6">Raportowanie administratora</Typography>
           <Stack direction={{ xs: "column", md: "row" }} spacing={1.25}>
             <TextField
               type="datetime-local"

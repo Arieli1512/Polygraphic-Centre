@@ -76,7 +76,7 @@ export default function EmployeeQueueListPage() {
 
   return (
     <Stack spacing={2}>
-      <Typography variant="h5" component="h2">5.1 Kolejka zamowien pracownika</Typography>
+      <Typography variant="h5" component="h2">Kolejka zamowien pracownika</Typography>
       <Typography color="text.secondary">
         Aktywne zamowienia przypisane do punktu druku pracownika, sortowane po terminie odbioru.
       </Typography>

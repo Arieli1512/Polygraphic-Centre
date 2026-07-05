@@ -197,7 +197,7 @@ export default function ClientNewOrderPage() {
 
   return (
     <Stack spacing={2}>
-      <Typography variant="h5" component="h2">4.4 + 4.5 Przeslanie pliku i zlozenie zamowienia</Typography>
+      <Typography variant="h5" component="h2">Przeslanie pliku i zlozenie zamowienia</Typography>
 
       {error && <Alert severity="error">{error}</Alert>}
       {successMessage && <Alert severity="success">{successMessage}</Alert>}

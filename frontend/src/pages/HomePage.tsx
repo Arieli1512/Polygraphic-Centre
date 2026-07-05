@@ -18,17 +18,11 @@ export default function HomePage() {
           realizację przez operatora.
         </Typography>
         <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5}>
-          <Button variant="outlined" onClick={() => nav("/printing-points")}>
+          <Button variant="contained" onClick={() => nav("/printing-points")}>
             Przegladaj drukarnie
           </Button>
           <Button variant="outlined" onClick={() => nav("/estimate")}>
             Kalkulator kosztu
-          </Button>
-          <Button variant="contained" onClick={() => nav("/signin")}>
-            Zaloguj się
-          </Button>
-          <Button variant="outlined" onClick={() => nav("/signup")}>
-            Utwórz konto
           </Button>
         </Stack>
       </Stack>

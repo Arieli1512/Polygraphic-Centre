@@ -81,7 +81,7 @@ export default function EmployeeOrderDetailsPage() {
   if (!order) {
     return (
       <Stack spacing={1.5}>
-        <Typography variant="h5" component="h2">5.2 Szczegoly zamowienia pracownika</Typography>
+        <Typography variant="h5" component="h2">Szczegoly zamowienia pracownika</Typography>
         {error ? <Alert severity="error">{error}</Alert> : <Typography>Ladowanie danych...</Typography>}
       </Stack>
     );
@@ -202,7 +202,7 @@ export default function EmployeeOrderDetailsPage() {
       )}
 
       <Dialog open={issueOpen} onClose={() => setIssueOpen(false)} fullWidth maxWidth="sm">
-        <DialogTitle>5.4 Raport problemu</DialogTitle>
+        <DialogTitle>Raport problemu</DialogTitle>
         <DialogContent>
           <Stack spacing={1.5} sx={{ pt: 1 }}>
             <Typography color="text.secondary">

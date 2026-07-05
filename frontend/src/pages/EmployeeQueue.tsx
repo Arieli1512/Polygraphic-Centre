@@ -11,7 +11,7 @@ export default function EmployeeQueue() {
         <Stack spacing={1.5}>
           <Typography variant="h4" component="h1">Kolejka pracownika</Typography>
           <Typography color="text.secondary">
-            Sekcja 5: obsluga kolejki, przejscia statusow, raporty problemow oraz pobieranie plikow.
+            Obsluga kolejki, przejscia statusow, raporty problemow oraz pobieranie plikow.
           </Typography>
 
           <Stack direction={{ xs: "column", md: "row" }} spacing={1}>

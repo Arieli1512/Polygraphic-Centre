@@ -142,7 +142,7 @@ export default function EstimatePage() {
   return (
     <Stack spacing={2.5}>
       <Typography variant="overline" color="text.secondary">
-        4.2 Kalkulator kosztu
+        Kalkulator kosztu
       </Typography>
       <Typography variant="h4" component="h1">
         Szacowanie kosztu wydruku

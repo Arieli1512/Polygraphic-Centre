@@ -186,7 +186,7 @@ export default function ManagerSettings() {
     return (
       <Paper sx={{ p: { xs: 3, md: 4 } }}>
         <Stack spacing={1.5}>
-          <Typography variant="h4" component="h1">6.1 Konfiguracja drukarni menedzera</Typography>
+          <Typography variant="h4" component="h1">Konfiguracja drukarni menedzera</Typography>
           {error ? <Alert severity="error">{error}</Alert> : <Typography>Ladowanie konfiguracji...</Typography>}
         </Stack>
       </Paper>
@@ -197,12 +197,12 @@ export default function ManagerSettings() {
     <Stack spacing={2}>
       <Paper sx={{ p: { xs: 3, md: 4 } }}>
         <Stack spacing={1.2}>
-          <Typography variant="h4" component="h1">6.1 Konfiguracja drukarni menedzera</Typography>
+          <Typography variant="h4" component="h1">Konfiguracja drukarni menedzera</Typography>
           <Typography color="text.secondary">
             {config.name} - {config.streetAddress}, {config.postalCode} {config.city}, {config.country}
           </Typography>
           <Typography color="text.secondary">
-            Panel obejmuje sekcje 6.2 i 6.3: cennik, godziny otwarcia, sloty i limity pojemnosci.
+            Panel obejmuje cennik, godziny otwarcia, sloty i limity pojemnosci.
           </Typography>
         </Stack>
       </Paper>
@@ -212,7 +212,7 @@ export default function ManagerSettings() {
 
       <Paper sx={{ p: { xs: 2.5, md: 3 } }}>
         <Stack spacing={2}>
-          <Typography variant="h6">6.2 Zarzadzanie cennikiem</Typography>
+          <Typography variant="h6">Zarzadzanie cennikiem</Typography>
           <Table size="small">
             <TableHead>
               <TableRow>
@@ -293,7 +293,7 @@ export default function ManagerSettings() {
 
       <Paper sx={{ p: { xs: 2.5, md: 3 } }}>
         <Stack spacing={2}>
-          <Typography variant="h6">6.3 Godziny otwarcia i sloty</Typography>
+          <Typography variant="h6">Godziny otwarcia i sloty</Typography>
           <Table size="small">
             <TableHead>
               <TableRow>
@@ -373,7 +373,7 @@ export default function ManagerSettings() {
 
       <Paper sx={{ p: { xs: 2.5, md: 3 } }}>
         <Stack spacing={2}>
-          <Typography variant="h6">6.3 Limity pojemnosci i opcje wydruku</Typography>
+          <Typography variant="h6">Limity pojemnosci i opcje wydruku</Typography>
 
           <Stack direction={{ xs: "column", md: "row" }} spacing={1.25}>
             <TextField

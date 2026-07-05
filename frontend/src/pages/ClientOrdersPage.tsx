@@ -72,7 +72,7 @@ export default function ClientOrdersPage() {
 
   return (
     <Stack spacing={2}>
-      <Typography variant="h5" component="h2">4.6 Historia zamowien</Typography>
+      <Typography variant="h5" component="h2">Historia zamowien</Typography>
       <Typography color="text.secondary">
         Filtruj i sortuj zamowienia klienta wedlug statusu, daty i punktu druku.
       </Typography>
