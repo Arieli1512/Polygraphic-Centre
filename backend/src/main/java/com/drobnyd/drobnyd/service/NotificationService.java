@@ -56,6 +56,13 @@ public class NotificationService {
                 newBalance);
     }
 
+    public void publishWalletCredited(Integer clientId, long amount, long newBalance) {
+        log.info("Publishing wallet-credited event for clientId={}, amount={}, newBalance={}",
+                clientId,
+                amount,
+                newBalance);
+    }
+
     public void publishOrderInProgress(Order order, Integer operatorId) {
         publishOrderEvent(
                 OrderEventType.ORDER_IN_PROGRESS,

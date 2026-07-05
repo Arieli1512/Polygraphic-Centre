@@ -142,6 +142,18 @@ public class OrderService {
 
                 order.setStatus(targetStatus);
                 Order savedOrder = orderRepository.save(order);
+
+                if (targetStatus == OrderStatus.CANCELLED) {
+                        balanceService.recordTopUp(
+                                        savedOrder.getClient().getClientId(),
+                                        savedOrder.getTotalPrice());
+                        var wallet = balanceService.getWallet(savedOrder.getClient().getClientId());
+                        notificationService.publishWalletCredited(
+                                        savedOrder.getClient().getClientId(),
+                                        savedOrder.getTotalPrice(),
+                                        wallet.getBalance());
+                }
+
                 notificationService.publishOrderStatusChanged(savedOrder, previousStatus);
 
                 return new OrderWorkflowResult(
