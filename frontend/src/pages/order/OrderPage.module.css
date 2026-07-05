@@ -1,0 +1,112 @@
+.priceCalculatorForm {
+    text-align: center;
+    align-items: center;
+    display: grid;
+    row-gap: 15px;
+    max-width: 1000px;
+    margin: auto;
+
+    border: 5px ridge var(--accent-bg);
+    border-radius: 25px;
+    padding: 10px;
+}
+
+.priceCalculatorPrintingPointChoice {
+    grid-column-start: 1;
+    grid-column-end: 4;
+    background-image: radial-gradient(var(--accent-bg),var(--bg));
+    border-radius: 20px;
+    padding: 10px;
+    width:fit-content;
+    justify-self: center;
+    border: 2px groove var(--accent-bg);
+    margin: 10px;
+}
+
+.priceCalculatorPrintingPointChoiceContainer {
+
+}
+
+.priceCalculatorBasicInput {
+    justify-self: center;
+    width: 100%;
+    background-image: radial-gradient(var(--accent-bg) 0%,var(--bg) 50%);
+}
+
+.priceCalculatorLabel {
+    font-weight: bold;
+    font-size: 1.1rem;
+    color: var(--text-h);
+}
+
+.priceCalculatorInputBase {
+    color: var(--text);
+    border-radius: 5px;
+    margin: 5px;
+    font-size: 0.9rem;
+}
+
+.priceCalculatorBasicCombobox {
+    background-color: var(--accent-bg);
+    border-color: var(--accent);
+}
+
+.priceCalculatorBasicInputField {
+    background-color: var(--accent-bg);
+    border-color: var(--accent);
+}
+
+.priceCalculatorFileInput {
+}
+
+.priceCalculatorFileInput::file-selector-button {
+    background-color: var(--accent-bg);
+    border-color: var(--accent);
+    color: var(--text);
+    border-radius: 5px;
+}
+
+.priceCalculatorDatetimeInput {
+    background-color: var(--accent-bg);
+    border-color: var(--accent);
+}
+
+.totalCostLabel {
+    grid-column-start: 1;
+    grid-column-end: 2;
+    font-weight: bold;
+    font-size: 1.1rem;
+    color: var(--text-h);
+    text-align: right;
+}
+
+.totalCostValue {
+    grid-column-start: 3;
+    grid-column-end: 4;
+    font-weight: bold;
+    font-size: 1.2rem;
+    color: var(--text-h);
+    text-align: left;
+    text-shadow: 4px 4px var(--accent-bg);
+}
+
+.orderButton {
+    background-color: var(--accent-bg);
+    border-color: var(--accent);
+    color: var(--text-h);
+    font-weight: bold;
+    font-size: 1.5rem;
+    padding: 10px;
+    margin: 10px;
+    border-radius: 15px;
+    grid-column-start: 1;
+    grid-column-end: 4;
+    width: fit-content;
+    justify-self: center;
+}
+
+.orderButton:hover {
+    background-color: var(--accent);
+    border-color: var(--text-h);
+    color: var(--bg);
+}

@@ -1,0 +1,89 @@
+.contentFrame {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.navBar {
+    display: flex;
+    justify-content: space-between;
+    padding: 20px 40px;
+    border-bottom: 1px solid var(--border);
+    align-items: center;
+}
+
+.logo {
+    margin: 0;
+    font-weight: bold;
+    font-size: 1.1rem;
+    color: var(--accent);
+    background-color: transparent;
+    padding: 0.5rem;
+    border-radius: 1rem;
+    border-color: var(--accent-border);
+    cursor: pointer;
+}
+.logo:hover {
+    background-color: var(--social-bg);
+    border-color: var(--accent);
+    border-style: dashed;
+}
+
+.userMeta {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.userEmail {
+    font-size: 0.9rem;
+    color: var(--text);
+    font-weight: 500;
+}
+
+.logoutButton {
+    padding: 8px 14px;
+    background-color: #ef4444;
+    color: var(--text-h);
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: bold;
+    transition: background-color 0.2s;
+}
+
+.logoutButton:hover {
+    background-color: #a11b1b;
+}
+
+.loginButton {
+    padding: 8px 16px;
+    background-color: var(--accent);
+    color: var(--bg);
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: opacity 0.2s;
+}
+
+.loginButton:hover {
+    background-color: var(--accent-bg);
+    color: var(--text-h);
+}
+
+.pageContent {
+    flex: 1;
+    padding: 32px;
+    overflow-y: auto;
+    text-align: left;
+}
+
+.pageFooter {
+    background-color: var(--accent-bg); /* Uses context contrast color for footer blocks */
+    color: var(--text-h);
+    padding: 20px;
+    text-align: center;
+    font-size: 0.9rem;
+}

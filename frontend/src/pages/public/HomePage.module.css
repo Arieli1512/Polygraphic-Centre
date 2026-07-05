@@ -1,0 +1,51 @@
+
+.homeMain {
+    flex: 1;
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 60px 20px;
+    text-align: center;
+    box-sizing: border-box;
+}
+
+.homeTitle {
+    font-weight: 800;
+    line-height: 2rem;
+    color: var(--text-h);
+}
+
+.homeSubtitle {
+    font-size: 1.25rem;
+    color: var(--text);
+    max-width: 600px;
+    margin: 0 auto 40px;
+}
+
+.navigationSection {
+    margin-top: 40px;
+}
+
+.navigationGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+    justify-content: center;
+}
+
+.navigationCard {
+    font-size: 1.1rem;
+    font-weight: bold;
+    padding: 20px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    text-align: left;
+    background-color: var(--code-bg); /* Integrates cleanly with light & dark panels */
+    cursor: pointer;
+}
+
+.navigationCard:hover  {
+    border-color: var(--accent);
+    border-style: dashed;
+    color: var(--accent);
+}

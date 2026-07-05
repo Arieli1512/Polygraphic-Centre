@@ -1,0 +1,28 @@
+.printingPointsSection {
+    text-align: center;
+    color: var(--text-h);
+}
+
+.printingPointDiv {
+    cursor: pointer;
+    display: inline-block;
+    width: fit-content;
+    color: var(--text);
+    border: 2px dashed var(--accent);
+    border-radius: 15px;
+    padding: 15px;
+    margin: 10px;
+}
+
+.printingPointDiv:hover {
+    background-color: var(--accent-bg);
+    border-style: solid;
+}
+
+.printingPointTitle {
+    color: var(--text-h);
+    margin: 0 5px 5px 5px;
+    padding: 2px 8px 4px 8px;
+    background-color: var(--accent-bg);
+    border-radius: 5px;
+}
