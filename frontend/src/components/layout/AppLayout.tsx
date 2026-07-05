@@ -17,6 +17,7 @@ interface NavigationItem {
   label: string;
   path: string;
   exact?: boolean;
+  excludePrefixes?: string[];
 }
 
 const DRAWER_WIDTH = 260;
@@ -33,7 +34,7 @@ function buildNavigationItems(role: "CLIENT" | "EMPLOYEE" | "ADMIN" | undefined)
       ...common,
       { label: "Panel klienta", path: "/client", exact: true },
       { label: "Nowe zamowienie", path: "/client/orders/new" },
-      { label: "Historia zamowien", path: "/client/orders" },
+      { label: "Historia zamowien", path: "/client/orders", excludePrefixes: ["/client/orders/new"] },
     ];
   }
 
@@ -74,11 +75,17 @@ export default function AppLayout() {
       </Box>
       <List sx={{ px: 1 }}>
         {navigationItems.map((item) => {
-          const isActive = item.exact
+          const isActiveBase = item.exact
             ? location.pathname === item.path
             : item.path === "/"
               ? location.pathname === "/"
               : location.pathname === item.path || location.pathname.startsWith(`${item.path}/`);
+
+          const isExcluded = item.excludePrefixes?.some((prefix) =>
+            location.pathname === prefix || location.pathname.startsWith(`${prefix}/`),
+          ) ?? false;
+
+          const isActive = isActiveBase && !isExcluded;
 
           return (
             <ListItemButton
