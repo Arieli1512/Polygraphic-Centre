@@ -3,6 +3,7 @@ import React, { createContext, useContext, useEffect, useState } from "react";
 import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
+  updateProfile,
   signOut as firebaseSignOut,
 } from "firebase/auth";
 
@@ -18,7 +19,7 @@ interface AuthContextType {
   loading: boolean;
   error: string | null;
   signIn: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string) => Promise<void>;
+  signUp: (email: string, password: string, firstName: string, lastName: string) => Promise<void>;
   logout: () => Promise<void>;
 }
 
@@ -63,7 +64,11 @@ function persistUser(user: AuthenticatedUser | null): void {
  * @returns Authenticated user information
  * @throws Error if exchange fails
  */
-async function exchangeFirebaseSession(idToken: string): Promise<AuthenticatedUser> {
+async function exchangeFirebaseSession(
+  idToken: string,
+  firstName?: string,
+  lastName?: string,
+): Promise<AuthenticatedUser> {
   console.debug("[Auth] Fetching CSRF token");
   // First, fetch CSRF token (stored in XSRF-TOKEN cookie by Spring Security)
   await api.get("/auth/csrf");
@@ -71,7 +76,7 @@ async function exchangeFirebaseSession(idToken: string): Promise<AuthenticatedUs
   console.debug("[Auth] Exchanging Firebase token for session");
   // Then, exchange Firebase token for session cookies
   // Axios will automatically send XSRF-TOKEN in X-XSRF-TOKEN header
-  const response = await api.post<AuthenticatedUser>("/auth/session", { idToken });
+  const response = await api.post<AuthenticatedUser>("/auth/session", { idToken, firstName, lastName });
   
   console.info("[Auth] Session created for user:", response.data.displayName);
   return response.data;
@@ -211,7 +216,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
    * @param password New user password
    * @throws Error if Firebase signup or token exchange fails
    */
-  const signUp = async (email: string, password: string) => {
+  const signUp = async (email: string, password: string, firstName: string, lastName: string) => {
     setLoading(true);
     setError(null);
     try {
@@ -219,12 +224,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       // Create account with Firebase
       const credential = await createUserWithEmailAndPassword(auth, email, password);
+
+      await updateProfile(credential.user, {
+        displayName: `${firstName} ${lastName}`.trim(),
+      });
       
       // Get Firebase ID token
       const token = await credential.user.getIdToken();
       
       // Exchange for backend session (provisions Client account)
-      const sessionUser = await exchangeFirebaseSession(token);
+      const sessionUser = await exchangeFirebaseSession(token, firstName, lastName);
       setUser(sessionUser);
       persistUser(sessionUser);
       

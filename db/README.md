@@ -61,17 +61,34 @@ Po tym wystarczy otworzyć *Query Tool*, będąc w bazie danych *drobnyd*
 
 ![Query Tool](images/pgadmin-query-tool.png)
 
+## Konta logowania Firebase
+
+Rekordy `clients` i `operators` w seedzie są danymi demonstracyjnymi bazy PostgreSQL. Same w sobie nie tworzą kont Firebase Auth i nie gwarantują możliwości logowania.
+
+Aby zalogować się jako klient, pracownik albo administrator, potrzebujesz obu elementów:
+
+1. konta w Firebase Authentication z konkretnym `firebase_uid`,
+2. odpowiadającego mu rekordu w PostgreSQL (`clients` albo `operators`).
+
+W praktyce oznacza to, że:
+
+- seedowe rekordy operatorów nie są automatycznie loginowalne,
+- zwykła rejestracja przez aplikację tworzy konto `CLIENT`,
+- konto `EMPLOYEE` lub `ADMIN` trzeba najpierw utworzyć w Firebase, a potem powiązać z rekordem `operators`.
+
+Najprostszy lokalny bootstrap dla operatora lub administratora jest taki:
+
+1. utwórz użytkownika w Firebase Authentication,
+2. skopiuj jego `UID`,
+3. dodaj rekord do tabeli `operators` z tym samym `firebase_uid`,
+4. dopiero potem loguj się tym kontem w aplikacji.
+
+Baza PostgreSQL sama nie tworzy kont Firebase i nie może tego zrobić SQL-em.
 
 Bardziej ogólnie, PostgreSQL jest dostępny pod:
+
 - Host: localhost
 - Port: 5433
 - Database: drobnyd
 - User: postgres
 - Password: postgres
-
-
-
-
-
-
-

@@ -3,10 +3,12 @@ import {
   Alert,
   Button,
   Chip,
+  CircularProgress,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
+  Paper,
   Stack,
   TextField,
   Typography,
@@ -42,6 +44,7 @@ export default function EmployeeOrderDetailsPage() {
   const [issueOpen, setIssueOpen] = useState(false);
   const [issueReason, setIssueReason] = useState("");
   const [busy, setBusy] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   const orderId = Number(params.orderId);
 
@@ -52,10 +55,13 @@ export default function EmployeeOrderDetailsPage() {
     }
 
     setError(null);
+    setLoading(true);
     try {
       setOrder(await fetchEmployeeOrderDetails(orderId));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Nie udalo sie pobrac szczegolow zamowienia.");
+    } finally {
+      setLoading(false);
     }
   }, [orderId]);
 
@@ -78,128 +84,158 @@ export default function EmployeeOrderDetailsPage() {
     }
   };
 
+  if (loading && !order) {
+    return (
+      <Stack spacing={1.5}>
+        <Typography>Ladowanie danych...</Typography>
+      </Stack>
+    );
+  }
+
   if (!order) {
     return (
       <Stack spacing={1.5}>
-        <Typography variant="h5" component="h2">Szczegoly zamowienia pracownika</Typography>
-        {error ? <Alert severity="error">{error}</Alert> : <Typography>Ladowanie danych...</Typography>}
+        {error ? <Alert severity="error">{error}</Alert> : <Alert severity="warning">Brak danych zamowienia.</Alert>}
       </Stack>
     );
   }
 
   return (
     <Stack spacing={2}>
-      <Stack direction={{ xs: "column", sm: "row" }} justifyContent="space-between" spacing={1}>
-        <Typography variant="h5" component="h2">Zamowienie #{order.orderId}</Typography>
-        <Stack direction="row" spacing={1}>
-          <Chip label={statusLabels[order.status]} color={order.status === "PROBLEM_REPORTED" ? "error" : "primary"} />
-          <Button variant="outlined" onClick={() => nav("/employee")}>Wroc do kolejki</Button>
+      <Paper sx={{ p: { xs: 2.5, md: 3 } }}>
+        <Stack spacing={2}>
+          <Stack direction={{ xs: "column", sm: "row" }} justifyContent="space-between" spacing={1} alignItems="flex-start">
+            <Stack spacing={0.5}>
+              <Typography variant="h5" component="h2">Zamowienie #{order.orderId}</Typography>
+              <Typography color="text.secondary">
+                {order.fileName} • termin odbioru {formatDateTime(order.pickupAt)}
+              </Typography>
+            </Stack>
+            <Stack direction="row" spacing={1}>
+              <Chip label={statusLabels[order.status]} color={order.status === "PROBLEM_REPORTED" ? "error" : "primary"} />
+              <Button variant="outlined" onClick={() => nav("/employee")}>Wroc do kolejki</Button>
+            </Stack>
+          </Stack>
+
+          {(error || success) && (
+            <Stack spacing={1}>
+              {error && <Alert severity="error">{error}</Alert>}
+              {success && <Alert severity="success">{success}</Alert>}
+            </Stack>
+          )}
+
+          <Stack direction={{ xs: "column", md: "row" }} spacing={2}>
+            <Paper variant="outlined" sx={{ flex: 1, p: 2 }}>
+              <Stack spacing={1}>
+                <Typography variant="subtitle1">Dane zamowienia</Typography>
+                <Typography color="text.secondary">Klient: {order.clientName} ({order.clientEmail})</Typography>
+                <Typography color="text.secondary">Plik: {order.fileName}</Typography>
+                <Typography color="text.secondary">Sciezka: {order.filePath}</Typography>
+                <Typography color="text.secondary">Liczba stron: {order.pageCount}</Typography>
+                <Typography color="text.secondary">Koszt: {formatMoney(order.totalPrice)}</Typography>
+                <Typography color="text.secondary">Termin odbioru: {formatDateTime(order.pickupAt)}</Typography>
+                <Typography color="text.secondary">W trakcie: {order.inProgress ? "Tak" : "Nie"}</Typography>
+                {order.printedAt && <Typography color="text.secondary">Start druku: {formatDateTime(order.printedAt)}</Typography>}
+              </Stack>
+            </Paper>
+
+            <Paper variant="outlined" sx={{ flex: 1, p: 2 }}>
+              <Stack spacing={1}>
+                <Typography variant="subtitle1">Parametry druku</Typography>
+                <Typography color="text.secondary">Format: {order.printSettings.format}</Typography>
+                <Typography color="text.secondary">Papier: {order.printSettings.paperType}</Typography>
+                <Typography color="text.secondary">Kolor: {order.printSettings.colorMode}</Typography>
+                <Typography color="text.secondary">Dupleks: {order.printSettings.duplex}</Typography>
+                <Typography color="text.secondary">Orientacja: {order.printSettings.orientation}</Typography>
+                <Typography color="text.secondary">Wykonczenie: {order.printSettings.finishing}</Typography>
+                <Typography color="text.secondary">Kopie: {order.printSettings.copies}</Typography>
+              </Stack>
+            </Paper>
+          </Stack>
+
+          <Stack direction={{ xs: "column", md: "row" }} spacing={1.25}>
+            <Button
+              variant="contained"
+              onClick={() =>
+                void runAction(
+                  async () => {
+                    await updateEmployeeOrderStatus(order.orderId, "APPROVED");
+                  },
+                  "Zamowienie zaakceptowane.",
+                )
+              }
+              disabled={busy || order.status !== "PENDING"}
+            >
+              Zaakceptuj
+            </Button>
+
+            <Button
+              variant="contained"
+              color="warning"
+              onClick={() =>
+                void runAction(
+                  async () => {
+                    await markEmployeeOrderInProgress(order.orderId);
+                  },
+                  "Zamowienie oznaczone jako w trakcie.",
+                )
+              }
+              disabled={busy || order.status !== "APPROVED"}
+            >
+              Oznacz w trakcie
+            </Button>
+
+            <Button
+              variant="contained"
+              color="success"
+              onClick={() =>
+                void runAction(
+                  async () => {
+                    await updateEmployeeOrderStatus(order.orderId, "READY");
+                  },
+                  "Zamowienie oznaczone jako gotowe.",
+                )
+              }
+              disabled={busy || order.status !== "APPROVED"}
+            >
+              Oznacz gotowe
+            </Button>
+
+            <Button variant="outlined" onClick={() => setIssueOpen(true)} disabled={busy}>
+              Zglos problem
+            </Button>
+
+            <Button
+              variant="outlined"
+              onClick={() =>
+                void runAction(
+                  async () => {
+                    const result = await generateEmployeeDownloadLink(order.orderId);
+                    setDownloadLink(result.downloadUrl);
+                  },
+                  "Wygenerowano bezpieczny link pobrania.",
+                )
+              }
+              disabled={busy}
+            >
+              Pobierz plik
+            </Button>
+          </Stack>
+
+          {busy && (
+            <Stack direction="row" spacing={1} alignItems="center">
+              <CircularProgress size={18} />
+              <Typography variant="body2" color="text.secondary">Wykonywanie operacji...</Typography>
+            </Stack>
+          )}
+
+          {downloadLink && (
+            <Alert severity="info">
+              Link pobrania: <a href={downloadLink} target="_blank" rel="noreferrer">otworz plik</a>
+            </Alert>
+          )}
         </Stack>
-      </Stack>
-
-      {error && <Alert severity="error">{error}</Alert>}
-      {success && <Alert severity="success">{success}</Alert>}
-
-      <Stack spacing={0.5}>
-        <Typography color="text.secondary">Klient: {order.clientName} ({order.clientEmail})</Typography>
-        <Typography color="text.secondary">Plik: {order.fileName}</Typography>
-        <Typography color="text.secondary">Sciezka: {order.filePath}</Typography>
-        <Typography color="text.secondary">Liczba stron: {order.pageCount}</Typography>
-        <Typography color="text.secondary">Koszt: {formatMoney(order.totalPrice)}</Typography>
-        <Typography color="text.secondary">Termin odbioru: {formatDateTime(order.pickupAt)}</Typography>
-        <Typography color="text.secondary">W trakcie: {order.inProgress ? "Tak" : "Nie"}</Typography>
-        {order.printedAt && <Typography color="text.secondary">Start druku: {formatDateTime(order.printedAt)}</Typography>}
-      </Stack>
-
-      <Stack spacing={0.5}>
-        <Typography variant="subtitle1">Parametry druku</Typography>
-        <Typography color="text.secondary">Format: {order.printSettings.format}</Typography>
-        <Typography color="text.secondary">Papier: {order.printSettings.paperType}</Typography>
-        <Typography color="text.secondary">Kolor: {order.printSettings.colorMode}</Typography>
-        <Typography color="text.secondary">Dupleks: {order.printSettings.duplex}</Typography>
-        <Typography color="text.secondary">Orientacja: {order.printSettings.orientation}</Typography>
-        <Typography color="text.secondary">Wykonczenie: {order.printSettings.finishing}</Typography>
-        <Typography color="text.secondary">Kopie: {order.printSettings.copies}</Typography>
-      </Stack>
-
-      <Stack direction={{ xs: "column", md: "row" }} spacing={1.25}>
-        <Button
-          variant="contained"
-          onClick={() =>
-            void runAction(
-              async () => {
-                await updateEmployeeOrderStatus(order.orderId, "APPROVED");
-              },
-              "Zamowienie zaakceptowane.",
-            )
-          }
-          disabled={busy || order.status !== "PENDING"}
-        >
-          Zaakceptuj
-        </Button>
-
-        <Button
-          variant="contained"
-          color="warning"
-          onClick={() =>
-            void runAction(
-              async () => {
-                await markEmployeeOrderInProgress(order.orderId);
-              },
-              "Zamowienie oznaczone jako w trakcie.",
-            )
-          }
-          disabled={busy || order.status !== "APPROVED"}
-        >
-          Oznacz w trakcie
-        </Button>
-
-        <Button
-          variant="contained"
-          color="success"
-          onClick={() =>
-            void runAction(
-              async () => {
-                await updateEmployeeOrderStatus(order.orderId, "READY");
-              },
-              "Zamowienie oznaczone jako gotowe.",
-            )
-          }
-          disabled={busy || order.status !== "APPROVED"}
-        >
-          Oznacz gotowe
-        </Button>
-
-        <Button
-          variant="outlined"
-          onClick={() => setIssueOpen(true)}
-          disabled={busy}
-        >
-          Zglos problem
-        </Button>
-
-        <Button
-          variant="outlined"
-          onClick={() =>
-            void runAction(
-              async () => {
-                const result = await generateEmployeeDownloadLink(order.orderId);
-                setDownloadLink(result.downloadUrl);
-              },
-              "Wygenerowano bezpieczny link pobrania.",
-            )
-          }
-          disabled={busy}
-        >
-          Pobierz plik
-        </Button>
-      </Stack>
-
-      {downloadLink && (
-        <Alert severity="info">
-          Link pobrania: <a href={downloadLink} target="_blank" rel="noreferrer">otworz plik</a>
-        </Alert>
-      )}
+      </Paper>
 
       <Dialog open={issueOpen} onClose={() => setIssueOpen(false)} fullWidth maxWidth="sm">
         <DialogTitle>Raport problemu</DialogTitle>

@@ -8,6 +8,8 @@ export interface SignInFormValues {
 }
 
 export interface SignUpFormValues extends SignInFormValues {
+  firstName: string;
+  lastName: string;
   confirmPassword: string;
 }
 
@@ -21,6 +23,8 @@ export function readSignInValues(formData: FormData): SignInFormValues {
 export function readSignUpValues(formData: FormData): SignUpFormValues {
   return {
     ...readSignInValues(formData),
+    firstName: String(formData.get("firstName") ?? ""),
+    lastName: String(formData.get("lastName") ?? ""),
     confirmPassword: String(formData.get("confirmPassword") ?? ""),
   };
 }
@@ -43,6 +47,14 @@ export function validateSignIn(values: SignInFormValues): AuthFieldErrors {
 
 export function validateSignUp(values: SignUpFormValues): AuthFieldErrors {
   const errors = validateSignIn(values);
+
+  if (!values.firstName.trim()) {
+    errors.firstName = "Imię jest wymagane";
+  }
+
+  if (!values.lastName.trim()) {
+    errors.lastName = "Nazwisko jest wymagane";
+  }
 
   if (values.password.length < 6) {
     errors.password = "Haslo musi miec co najmniej 6 znakow";

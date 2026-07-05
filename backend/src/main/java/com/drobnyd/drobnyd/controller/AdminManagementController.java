@@ -28,6 +28,7 @@ import com.drobnyd.drobnyd.exception.ConfigurationConflictException;
 import com.drobnyd.drobnyd.exception.ResourceNotFoundException;
 import com.drobnyd.drobnyd.repository.OperatorRepository;
 import com.drobnyd.drobnyd.repository.PrintingPointRepository;
+import com.drobnyd.drobnyd.service.OperatorInvitationService;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
@@ -44,14 +45,17 @@ public class AdminManagementController {
 
     private final PrintingPointRepository printingPointRepository;
     private final OperatorRepository operatorRepository;
+    private final OperatorInvitationService operatorInvitationService;
     private final ApiResponseFactory apiResponseFactory;
 
     public AdminManagementController(
             PrintingPointRepository printingPointRepository,
             OperatorRepository operatorRepository,
+            OperatorInvitationService operatorInvitationService,
             ApiResponseFactory apiResponseFactory) {
         this.printingPointRepository = printingPointRepository;
         this.operatorRepository = operatorRepository;
+        this.operatorInvitationService = operatorInvitationService;
         this.apiResponseFactory = apiResponseFactory;
     }
 
@@ -166,7 +170,9 @@ public class AdminManagementController {
                         operator.getRole(),
                         operator.getStatus(),
                         operator.getCreatedAt(),
-                        operator.getUpdatedAt()))
+                        operator.getUpdatedAt(),
+                        "",
+                        false))
                 .toList();
 
         return apiResponseFactory.success(payload);
@@ -178,34 +184,24 @@ public class AdminManagementController {
             @Valid @RequestBody CreateOperatorRequest request) {
         requireAdminSessionUser(authentication);
 
-        operatorRepository.findByFirebaseUid(request.firebaseUid()).ifPresent(existing -> {
-            throw new ConfigurationConflictException(
-                    "Operator with firebaseUid already exists: " + request.firebaseUid(),
-                    "Nie mozna utworzyc nowego konta personelu o tym samym Firebase UID.",
-                    "Uzyj innego konta albo zmien dane istnieacego operatora.");
-        });
-
-        PrintingPoint printingPoint = printingPointRepository.findById(request.printingPointId())
-                .orElseThrow(
-                        () -> new ResourceNotFoundException("PrintingPoint", request.printingPointId().toString()));
-
-        Operator saved = operatorRepository.save(Operator.create(
-                printingPoint,
-                request.firebaseUid(),
+        OperatorInvitationService.OperatorInvitationResult result = operatorInvitationService.inviteOperator(
+                request.printingPointId(),
                 request.email(),
                 request.employeeNumber(),
-                request.role()));
+                request.role());
 
         return apiResponseFactory.success(new OperatorResponse(
-                saved.getOperatorId(),
-                saved.getPrintingPoint().getPrintingPointId(),
-                saved.getFirebaseUid(),
-                saved.getEmail(),
-                saved.getEmployeeNumber(),
-                saved.getRole(),
-                saved.getStatus(),
-                saved.getCreatedAt(),
-                saved.getUpdatedAt()));
+                result.operatorId(),
+                result.printingPointId(),
+                result.firebaseUid(),
+                result.email(),
+                result.employeeNumber(),
+                result.role(),
+                result.status(),
+                result.createdAt(),
+                result.updatedAt(),
+                result.inviteLink(),
+                result.inviteSent()));
     }
 
     @PatchMapping("/operators/{operatorId}")
@@ -237,7 +233,9 @@ public class AdminManagementController {
                 saved.getRole(),
                 saved.getStatus(),
                 saved.getCreatedAt(),
-                saved.getUpdatedAt()));
+                saved.getUpdatedAt(),
+                "",
+                false));
     }
 
     private SessionUser requireAdminSessionUser(Authentication authentication) {
@@ -300,12 +298,13 @@ public class AdminManagementController {
             OperatorRole role,
             OperatorStatus status,
             java.time.OffsetDateTime createdAt,
-            java.time.OffsetDateTime updatedAt) {
+            java.time.OffsetDateTime updatedAt,
+            String inviteLink,
+            boolean inviteSent) {
     }
 
     public record CreateOperatorRequest(
             @NotNull Integer printingPointId,
-            @NotBlank String firebaseUid,
             @NotBlank @Email String email,
             @NotBlank String employeeNumber,
             @NotNull OperatorRole role) {

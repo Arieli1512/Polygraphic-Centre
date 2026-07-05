@@ -10,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.drobnyd.drobnyd.entity.Client;
 import com.drobnyd.drobnyd.entity.Operator;
 import com.drobnyd.drobnyd.entity.Wallet;
+import com.drobnyd.drobnyd.auth.dto.FirebaseSessionExchangeRequest;
 import com.drobnyd.drobnyd.exception.AccountLinkException;
 import com.drobnyd.drobnyd.exception.AuthenticationFailedException;
 import com.drobnyd.drobnyd.repository.ClientRepository;
@@ -62,9 +63,9 @@ public class AuthService {
      * @throws ResponseStatusException 401 if token is invalid
      */
     @Transactional
-    public AuthSessionResult exchangeFirebaseToken(String idToken) {
-        FirebaseToken firebaseToken = verifyFirebaseToken(idToken);
-        SessionUser user = resolveOrProvisionSessionUser(firebaseToken);
+    public AuthSessionResult exchangeFirebaseToken(FirebaseSessionExchangeRequest request) {
+        FirebaseToken firebaseToken = verifyFirebaseToken(request.idToken());
+        SessionUser user = resolveOrProvisionSessionUser(firebaseToken, request.firstName(), request.lastName());
         return createSession(user);
     }
 
@@ -113,10 +114,12 @@ public class AuthService {
         }
     }
 
-    private SessionUser resolveOrProvisionSessionUser(FirebaseToken firebaseToken) {
+    private SessionUser resolveOrProvisionSessionUser(
+            FirebaseToken firebaseToken,
+            String requestedFirstName,
+            String requestedLastName) {
         String firebaseUid = firebaseToken.getUid();
         String email = safeEmail(firebaseToken, firebaseUid);
-        String displayName = resolveDisplayName(firebaseToken, email);
 
         // Try to find existing Client
         Optional<Client> client = clientRepository.findByFirebaseUid(firebaseUid);
@@ -134,8 +137,9 @@ public class AuthService {
 
         // Provision new Client account
         log.info("Provisioning new Client account for Firebase UID: {} (email: {})", firebaseUid, email);
-        String[] names = splitDisplayName(displayName);
-        Client savedClient = clientRepository.save(Client.provisioned(firebaseUid, email, names[0], names[1]));
+        NameParts names = resolveClientNames(firebaseToken, email, requestedFirstName, requestedLastName);
+        Client savedClient = clientRepository
+                .save(Client.provisioned(firebaseUid, email, names.firstName(), names.lastName()));
         walletRepository.save(Wallet.initialize(savedClient));
         log.info("New Client account created with ID: {}", savedClient.getClientId());
         return toClientSessionUser(savedClient);
@@ -157,7 +161,7 @@ public class AuthService {
     }
 
     private SessionUser toClientSessionUser(Client client) {
-        String displayName = client.getFirstName() + " " + client.getLastName();
+        String displayName = (client.getFirstName() + " " + client.getLastName()).trim();
         return new SessionUser(
                 client.getClientId(),
                 client.getFirebaseUid(),
@@ -198,23 +202,61 @@ public class AuthService {
         return email.substring(0, email.indexOf('@'));
     }
 
-    private String[] splitDisplayName(String displayName) {
+    private NameParts resolveClientNames(
+            FirebaseToken firebaseToken,
+            String email,
+            String requestedFirstName,
+            String requestedLastName) {
+        String firstName = normalizeNamePart(requestedFirstName);
+        String lastName = normalizeNamePart(requestedLastName);
+
+        if (firstName != null || lastName != null) {
+            return new NameParts(
+                    firstName != null ? firstName : fallbackFirstName(firebaseToken, email),
+                    lastName != null ? lastName : "");
+        }
+
+        String displayName = resolveDisplayName(firebaseToken, email);
+        return splitDisplayName(displayName);
+    }
+
+    private NameParts splitDisplayName(String displayName) {
         String normalized = displayName.replace('_', ' ').replace('.', ' ').trim();
         String[] parts = normalized.split("\\s+");
         if (parts.length == 0 || parts[0].isBlank()) {
-            return new String[] { "Nowy", "Klient" };
+            return new NameParts("Nowy", "");
         }
         if (parts.length == 1) {
-            return new String[] { capitalize(parts[0]), "Klient" };
+            return new NameParts(capitalize(parts[0]), "");
         }
-        return new String[] { capitalize(parts[0]), capitalize(parts[1]) };
+        return new NameParts(capitalize(parts[0]), capitalize(parts[1]));
     }
 
     private String capitalize(String value) {
         if (value == null || value.isBlank()) {
-            return "Klient";
+            return "";
         }
         String trimmed = value.trim();
         return Character.toUpperCase(trimmed.charAt(0)) + trimmed.substring(1).toLowerCase();
+    }
+
+    private String normalizeNamePart(String value) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        return capitalize(value);
+    }
+
+    private String fallbackFirstName(FirebaseToken firebaseToken, String email) {
+        String displayName = resolveDisplayName(firebaseToken, email);
+        String normalized = displayName.replace('_', ' ').replace('.', ' ').trim();
+        String[] parts = normalized.split("\\s+");
+        if (parts.length == 0 || parts[0].isBlank()) {
+            return "Nowy";
+        }
+        return capitalize(parts[0]);
+    }
+
+    private record NameParts(String firstName, String lastName) {
     }
 }

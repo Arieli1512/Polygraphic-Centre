@@ -40,7 +40,7 @@ export default function SignUpPage() {
           return { error: null, fieldErrors: validationErrors };
         }
 
-        await signUp(values.email, values.password);
+        await signUp(values.email, values.password, values.firstName, values.lastName);
         nav("/client");
         return { error: null, fieldErrors: {} };
       } catch (error) {
@@ -57,8 +57,8 @@ export default function SignUpPage() {
 
   return (
     <AuthFormShell
-      title="Rejestracja"
-      subtitle="Utwórz konto klienta i rozpocznij składanie zamówień online."
+      title="Rejestracja klienta"
+      subtitle="Utwórz konto klienta. Konta pracowników i administratorów zakłada administracja z panelu."
       footer={
         <Typography variant="body2" color="text.secondary">
           Masz już konto? <Button size="small" onClick={() => nav("/signin")}>Zaloguj się</Button>
@@ -68,6 +68,18 @@ export default function SignUpPage() {
       <Box component="form" action={submitAction}>
         <Stack spacing={2}>
           {state.error && <Alert severity="error">{state.error}</Alert>}
+          <AuthFormField
+            name="firstName"
+            label="Imię"
+            autoComplete="given-name"
+            errorMessage={state.fieldErrors.firstName}
+          />
+          <AuthFormField
+            name="lastName"
+            label="Nazwisko"
+            autoComplete="family-name"
+            errorMessage={state.fieldErrors.lastName}
+          />
           <AuthFormField
             name="email"
             label="Email"

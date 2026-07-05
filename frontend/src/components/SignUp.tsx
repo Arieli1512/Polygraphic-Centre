@@ -30,6 +30,8 @@ export const SignUp: React.FC<SignUpProps> = ({ onSuccess }) => {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
@@ -47,6 +49,14 @@ export const SignUp: React.FC<SignUpProps> = ({ onSuccess }) => {
       errors.password = "Hasło jest wymagane";
     } else if (password.length < 6) {
       errors.password = "Hasło musi mieć przynajmniej 6 znaków";
+    }
+
+    if (!firstName.trim()) {
+      errors.firstName = "Imię jest wymagane";
+    }
+
+    if (!lastName.trim()) {
+      errors.lastName = "Nazwisko jest wymagane";
     }
 
     if (!confirmPassword.trim()) {
@@ -70,12 +80,14 @@ export const SignUp: React.FC<SignUpProps> = ({ onSuccess }) => {
 
     try {
       console.debug("[SignUp] Attempting to sign up");
-      await signUp(email, password);
+      await signUp(email, password, firstName, lastName);
       console.info("[SignUp] Sign up successful");
 
       // Clear form
       setEmail("");
       setPassword("");
+      setFirstName("");
+      setLastName("");
       setConfirmPassword("");
       setFieldErrors({});
 
@@ -131,6 +143,36 @@ export const SignUp: React.FC<SignUpProps> = ({ onSuccess }) => {
 
           <form onSubmit={handleSubmit}>
             <Stack spacing={2}>
+              <TextField
+                label="Imię"
+                value={firstName}
+                onChange={(e) => {
+                  setFirstName(e.target.value);
+                  if (fieldErrors.firstName) {
+                    setFieldErrors((current) => ({ ...current, firstName: "" }));
+                  }
+                }}
+                error={!!fieldErrors.firstName}
+                helperText={fieldErrors.firstName}
+                disabled={loading}
+                fullWidth
+              />
+
+              <TextField
+                label="Nazwisko"
+                value={lastName}
+                onChange={(e) => {
+                  setLastName(e.target.value);
+                  if (fieldErrors.lastName) {
+                    setFieldErrors((current) => ({ ...current, lastName: "" }));
+                  }
+                }}
+                error={!!fieldErrors.lastName}
+                helperText={fieldErrors.lastName}
+                disabled={loading}
+                fullWidth
+              />
+
               <TextField
                 label="Email"
                 type="email"

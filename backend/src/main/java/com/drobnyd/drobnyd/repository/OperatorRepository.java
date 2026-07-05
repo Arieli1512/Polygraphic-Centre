@@ -11,6 +11,8 @@ public interface OperatorRepository extends JpaRepository<Operator, Integer> {
 
 	Optional<Operator> findByFirebaseUid(@org.jspecify.annotations.NonNull String firebaseUid);
 
+	Optional<Operator> findByEmail(@org.jspecify.annotations.NonNull String email);
+
 	List<Operator> findAllByOrderByCreatedAtDesc();
 
 	List<Operator> findByPrintingPoint_PrintingPointIdOrderByCreatedAtDesc(Integer printingPointId);

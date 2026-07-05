@@ -114,7 +114,7 @@ public class AuthController {
         log.info("[{}] Exchanging Firebase token for session", requestId);
 
         try {
-            AuthSessionResult session = authService.exchangeFirebaseToken(request.idToken());
+            AuthSessionResult session = authService.exchangeFirebaseToken(request);
             authCookieService.writeSessionCookies(response, session.accessToken(), session.refreshToken());
 
             SessionUser user = session.user();
@@ -213,7 +213,7 @@ public class AuthController {
      * 
      * Removes both access_token and refresh_token httpOnly cookies.
      * 
-    * @param request HTTP request used to invalidate any existing servlet session
+     * @param request  HTTP request used to invalidate any existing servlet session
      * @param response HTTP response to clear cookies
      * @return 204 No Content
      */

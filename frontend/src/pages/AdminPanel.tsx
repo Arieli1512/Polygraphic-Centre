@@ -50,7 +50,6 @@ const initialPointPayload: CreateAdminPrintingPointPayload = {
 
 const initialOperatorPayload: CreateAdminOperatorPayload = {
   printingPointId: 1,
-  firebaseUid: "",
   email: "",
   employeeNumber: "",
   role: "EMPLOYEE",
@@ -62,6 +61,7 @@ export default function AdminPanel() {
   const [report, setReport] = useState<OrderReportSummary | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [inviteLink, setInviteLink] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
   const [pointForm, setPointForm] = useState<CreateAdminPrintingPointPayload>(initialPointPayload);
@@ -145,13 +145,29 @@ export default function AdminPanel() {
   };
 
   const submitOperator = async () => {
-    await run(async () => {
-      await createAdminOperator(operatorForm);
+    setBusy(true);
+    setError(null);
+    setSuccess(null);
+    setInviteLink(null);
+
+    try {
+      const result = await createAdminOperator(operatorForm);
       setOperatorForm((prev) => ({
         ...initialOperatorPayload,
         printingPointId: prev.printingPointId,
       }));
-    }, "Dodano konto personelu.");
+      setInviteLink(result.inviteLink);
+      setSuccess(
+        result.inviteSent
+          ? "Dodano konto personelu i wyslano zaproszenie e-mail."
+          : "Dodano konto personelu. Zaproszenie jest gotowe do przekazania.",
+      );
+      await refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Operacja administratorska nie powiodla sie.");
+    } finally {
+      setBusy(false);
+    }
   };
 
   const saveOperator = async (operatorId: number, role: "ADMIN" | "EMPLOYEE", status: "ACTIVE" | "BLOCKED") => {
@@ -230,6 +246,11 @@ export default function AdminPanel() {
 
       {error && <Alert severity="error">{error}</Alert>}
       {success && <Alert severity="success">{success}</Alert>}
+      {inviteLink && (
+        <Alert severity="info">
+          Link zaproszenia: <a href={inviteLink} target="_blank" rel="noreferrer">otworz zaproszenie</a>
+        </Alert>
+      )}
 
       <Paper sx={{ p: { xs: 2.5, md: 3 } }}>
         <Stack spacing={2}>
@@ -323,7 +344,6 @@ export default function AdminPanel() {
                 <MenuItem key={point.printingPointId} value={point.printingPointId}>{point.name}</MenuItem>
               ))}
             </TextField>
-            <TextField label="Firebase UID" value={operatorForm.firebaseUid} onChange={(event) => setOperatorForm((prev) => ({ ...prev, firebaseUid: event.target.value }))} fullWidth />
             <TextField label="Email" value={operatorForm.email} onChange={(event) => setOperatorForm((prev) => ({ ...prev, email: event.target.value }))} fullWidth />
           </Stack>
           <Stack direction={{ xs: "column", md: "row" }} spacing={1.25}>
@@ -339,7 +359,7 @@ export default function AdminPanel() {
               <MenuItem value="ADMIN">ADMIN</MenuItem>
             </TextField>
             <Button variant="contained" disabled={busy} onClick={() => void submitOperator()}>
-              Dodaj / zapros personel
+              Utworz konto i wyslij zaproszenie
             </Button>
           </Stack>
 

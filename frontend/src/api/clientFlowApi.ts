@@ -373,19 +373,31 @@ export async function fetchAdminOperators(
 
 export interface CreateAdminOperatorPayload {
   printingPointId: number;
-  firebaseUid: string;
   email: string;
   employeeNumber: string;
   role: "ADMIN" | "EMPLOYEE";
 }
 
+export interface CreateAdminOperatorResult {
+  operatorId: number;
+  printingPointId: number;
+  firebaseUid: string;
+  email: string;
+  employeeNumber: string;
+  role: "ADMIN" | "EMPLOYEE";
+  status: "ACTIVE" | "BLOCKED";
+  createdAt: string;
+  updatedAt: string;
+  inviteLink: string;
+  inviteSent: boolean;
+}
+
 export async function createAdminOperator(
   payload: CreateAdminOperatorPayload,
-): Promise<AdminOperator> {
-  const response = await api.post<ApiSuccessResponse<AdminOperator>>(
-    "/v1/admin/operators",
-    payload,
-  );
+): Promise<CreateAdminOperatorResult> {
+  const response = await api.post<
+    ApiSuccessResponse<CreateAdminOperatorResult>
+  >("/v1/admin/operators", payload);
   return unwrapData(response.data);
 }
 
