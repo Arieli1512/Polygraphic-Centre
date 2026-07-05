@@ -17,6 +17,21 @@ export default function ClientPanel() {
   const nav = useNavigate();
   const location = useLocation();
 
+  const isNavItemActive = (path: string): boolean => {
+    if (path === "/client/orders/new") {
+      return location.pathname === path || location.pathname.startsWith(`${path}/`);
+    }
+
+    if (path === "/client/orders") {
+      return (
+        (location.pathname === path || location.pathname.startsWith(`${path}/`))
+        && !location.pathname.startsWith("/client/orders/new")
+      );
+    }
+
+    return location.pathname === path || location.pathname.startsWith(`${path}/`);
+  };
+
   return (
     <Stack spacing={2}>
       <Paper sx={{ p: { xs: 2.5, md: 3 } }}>
@@ -30,7 +45,7 @@ export default function ClientPanel() {
             {navItems.map((item) => (
               <Button
                 key={item.path}
-                variant={location.pathname.startsWith(item.path) ? "contained" : "outlined"}
+                variant={isNavItemActive(item.path) ? "contained" : "outlined"}
                 onClick={() => nav(item.path)}
               >
                 {item.label}
