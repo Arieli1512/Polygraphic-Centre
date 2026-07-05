@@ -1,18 +1,14 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Alert,
   Button,
-  IconButton,
-  InputAdornment,
   LinearProgress,
   MenuItem,
   Stack,
   TextField,
-  Tooltip,
   Typography,
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
-import AccessTimeIcon from "@mui/icons-material/AccessTime";
 
 import {
   calculateEstimate,
@@ -54,7 +50,6 @@ interface StoredEstimate {
 
 export default function ClientNewOrderPage() {
   const nav = useNavigate();
-  const pickupTimeInputRef = useRef<HTMLInputElement | null>(null);
 
   const [points, setPoints] = useState<PrintingPointSummary[]>([]);
   const [pointDetails, setPointDetails] = useState<PrintingPointDetails | null>(null);
@@ -238,20 +233,6 @@ export default function ClientNewOrderPage() {
     }
   };
 
-  const openNativeTimePicker = () => {
-    const input = pickupTimeInputRef.current;
-    if (!input) {
-      return;
-    }
-
-    if (typeof input.showPicker === "function") {
-      input.showPicker();
-      return;
-    }
-
-    input.focus();
-  };
-
   return (
     <Stack spacing={2}>
       <Typography variant="h5" component="h2">Przeslanie pliku i zlozenie zamowienia</Typography>
@@ -290,18 +271,6 @@ export default function ClientNewOrderPage() {
           value={pickupTime}
           InputLabelProps={{ shrink: true }}
           inputProps={{ step: 300 }}
-          inputRef={pickupTimeInputRef}
-          InputProps={{
-            endAdornment: (
-              <InputAdornment position="end">
-                <Tooltip title="Otworz picker godziny">
-                  <IconButton edge="end" onClick={openNativeTimePicker} aria-label="Otworz picker godziny">
-                    <AccessTimeIcon fontSize="small" />
-                  </IconButton>
-                </Tooltip>
-              </InputAdornment>
-            ),
-          }}
           onChange={(event) => setPickupTime(event.target.value)}
         />
       </Stack>
