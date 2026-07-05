@@ -34,14 +34,27 @@ app.tracing.trace-id-mdc-key=traceId
 # Google Cloud Storage
 gcs.project-id=your-gcp-project-id
 gcs.bucket-name=your-gcs-bucket-name
-gcs.credentials-path=
+gcs.upload-root-prefix=clients
+gcs.signed-url-ttl-minutes=15
+gcs.signing-service-account-email=
 
 # Pub/Sub
 pubsub.project-id=your-gcp-project-id
-pubsub.topic-name=order-events
+pubsub.order-events-topic-name=order-events
+pubsub.notification-events-topic-name=notification-events
+pubsub.storage-uploads-topic-name=storage-uploads
+pubsub.enabled=false
+pubsub.require-oidc=false
+pubsub.webhook-audience=
 
 # Mail
-mail.host=smtp.example.com
-mail.port=587
-mail.username=
-mail.password=
+mail.enabled=false
+mail.from-address=no-reply@polygraphic-centre.local
+mail.subject-prefix=[Polygraphic Centre]
+
+spring.mail.host=smtp.example.com
+spring.mail.port=587
+spring.mail.username=
+spring.mail.password=
+spring.mail.properties.mail.smtp.auth=true
+spring.mail.properties.mail.smtp.starttls.enable=true

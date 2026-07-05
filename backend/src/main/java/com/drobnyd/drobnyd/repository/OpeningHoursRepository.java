@@ -10,4 +10,6 @@ import com.drobnyd.drobnyd.entity.id.OpeningHoursId;
 public interface OpeningHoursRepository extends JpaRepository<OpeningHours, OpeningHoursId> {
 
     List<OpeningHours> findByPrintingPoint_PrintingPointIdOrderByIdDayOfWeekAsc(Integer printingPointId);
+
+    void deleteByPrintingPoint_PrintingPointIdAndIdDayOfWeek(Integer printingPointId, Integer dayOfWeek);
 }

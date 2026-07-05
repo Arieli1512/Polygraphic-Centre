@@ -114,6 +114,9 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         // Public endpoints for guest users
                         .requestMatchers("/api/public/**").permitAll()
+                        .requestMatchers("/api/v1/printing-points/**").permitAll()
+                        .requestMatchers("/api/v1/pricing/estimates").permitAll()
+                        .requestMatchers("/api/webhooks/pubsub/**").permitAll()
                         // Auth endpoints (login, logout, session exchange, CSRF token) - no auth
                         // required
                         .requestMatchers(

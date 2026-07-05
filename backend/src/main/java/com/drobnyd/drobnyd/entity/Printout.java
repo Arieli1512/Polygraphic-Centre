@@ -25,6 +25,14 @@ import lombok.ToString;
 @ToString(onlyExplicitlyIncluded = true)
 public class Printout {
 
+    public static Printout started(Order order, Operator operator, OffsetDateTime printedAt) {
+        Printout printout = new Printout();
+        printout.setOrder(order);
+        printout.setOperator(operator);
+        printout.setPrintedAt(printedAt);
+        return printout;
+    }
+
     @Id
     @Column(name = "order_id", nullable = false, updatable = false)
     @ToString.Include

@@ -21,10 +21,19 @@ interface NavigationItem {
 const DRAWER_WIDTH = 260;
 
 function buildNavigationItems(role: "CLIENT" | "EMPLOYEE" | "ADMIN" | undefined): NavigationItem[] {
-  const common: NavigationItem[] = [{ label: "Strona główna", path: "/" }];
+  const common: NavigationItem[] = [
+    { label: "Strona glowna", path: "/" },
+    { label: "Drukarnie", path: "/printing-points" },
+    { label: "Kalkulator", path: "/estimate" },
+  ];
 
   if (role === "CLIENT") {
-    return [...common, { label: "Panel klienta", path: "/client" }];
+    return [
+      ...common,
+      { label: "Panel klienta", path: "/client" },
+      { label: "Nowe zamowienie", path: "/client/orders/new" },
+      { label: "Historia zamowien", path: "/client/orders" },
+    ];
   }
 
   if (role === "EMPLOYEE") {

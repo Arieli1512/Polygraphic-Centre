@@ -173,5 +173,5 @@ The application will start on `http://localhost:8080` by default.
 - If you see a Java version mismatch, confirm that the `java` command points to Java 25 and not an older version.
 - Use `application-local.properties` for local-only defaults and environment variables for secrets or deployment-specific values.
 - Keep `src/main/resources/firebase-service-account.json` local-only. Do not copy it into a container image or publish it through CI.
-- The current codebase does not yet implement Google Cloud Storage signed URL generation.
-- The current codebase does not yet implement a Pub/Sub push webhook endpoint or Pub/Sub publisher client.
+- The current codebase includes Google Cloud Storage V4 signed URL generation for upload and employee download flows.
+- The current codebase includes Pub/Sub push webhook endpoints and a Pub/Sub publisher client for section 7 flows.

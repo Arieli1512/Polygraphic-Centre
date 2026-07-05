@@ -20,6 +20,23 @@ import lombok.ToString;
 @ToString(onlyExplicitlyIncluded = true)
 public class PrintingPoint {
 
+    public static PrintingPoint create(
+            String name,
+            String streetAddress,
+            String city,
+            String postalCode,
+            String country,
+            Integer hourlyOrderLimit) {
+        PrintingPoint printingPoint = new PrintingPoint();
+        printingPoint.setName(name);
+        printingPoint.setStreetAddress(streetAddress);
+        printingPoint.setCity(city);
+        printingPoint.setPostalCode(postalCode);
+        printingPoint.setCountry(country);
+        printingPoint.setHourlyOrderLimit(hourlyOrderLimit);
+        return printingPoint;
+    }
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "printing_point_id", nullable = false, updatable = false)

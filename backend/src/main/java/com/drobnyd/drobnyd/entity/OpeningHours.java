@@ -26,6 +26,16 @@ import lombok.ToString;
 @ToString(onlyExplicitlyIncluded = true)
 public class OpeningHours {
 
+    public static OpeningHours of(PrintingPoint printingPoint, Integer dayOfWeek, LocalTime startTime,
+            LocalTime endTime) {
+        OpeningHours openingHours = new OpeningHours();
+        openingHours.setPrintingPoint(printingPoint);
+        openingHours.setId(new OpeningHoursId(printingPoint.getPrintingPointId(), dayOfWeek));
+        openingHours.setStartTime(startTime);
+        openingHours.setEndTime(endTime);
+        return openingHours;
+    }
+
     @EmbeddedId
     @ToString.Include
     private OpeningHoursId id;

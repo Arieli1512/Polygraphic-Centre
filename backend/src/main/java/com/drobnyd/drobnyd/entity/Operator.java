@@ -30,6 +30,22 @@ import lombok.ToString;
 @ToString(onlyExplicitlyIncluded = true)
 public class Operator {
 
+    public static Operator create(
+            PrintingPoint printingPoint,
+            String firebaseUid,
+            String email,
+            String employeeNumber,
+            OperatorRole role) {
+        Operator operator = new Operator();
+        operator.setPrintingPoint(printingPoint);
+        operator.setFirebaseUid(firebaseUid);
+        operator.setEmail(email);
+        operator.setEmployeeNumber(employeeNumber);
+        operator.setRole(role);
+        operator.setStatus(OperatorStatus.ACTIVE);
+        return operator;
+    }
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "operator_id", nullable = false, updatable = false)

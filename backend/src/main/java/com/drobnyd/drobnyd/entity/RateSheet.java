@@ -24,6 +24,17 @@ import lombok.ToString;
 @ToString(onlyExplicitlyIncluded = true)
 public class RateSheet {
 
+    public static RateSheet of(PrintingPoint printingPoint, String paperType, String format, Long pagePrice) {
+        RateSheet rateSheet = new RateSheet();
+        rateSheet.setPrintingPoint(printingPoint);
+        rateSheet.setId(new com.drobnyd.drobnyd.entity.id.RateSheetId(
+                printingPoint.getPrintingPointId(),
+                paperType,
+                format));
+        rateSheet.setPagePrice(pagePrice);
+        return rateSheet;
+    }
+
     @EmbeddedId
     @ToString.Include
     private RateSheetId id;

@@ -4,7 +4,15 @@ import HomePage from "../pages/HomePage";
 import SignInPage from "../pages/SignInPage";
 import SignUpPage from "../pages/SignUpPage";
 import ClientPanel from "../pages/ClientPanel";
+import ClientOverviewPage from "../pages/ClientOverviewPage";
+import ClientOrdersPage from "../pages/ClientOrdersPage";
+import ClientOrderDetailsPage from "../pages/ClientOrderDetailsPage";
+import ClientNewOrderPage from "../pages/ClientNewOrderPage";
+import PrintingPointsPage from "../pages/PrintingPointsPage";
+import EstimatePage from "../pages/EstimatePage";
 import EmployeeQueue from "../pages/EmployeeQueue";
+import EmployeeQueueListPage from "../pages/EmployeeQueueListPage";
+import EmployeeOrderDetailsPage from "../pages/EmployeeOrderDetailsPage";
 import ManagerSettings from "../pages/ManagerSettings";
 import AdminPanel from "../pages/AdminPanel";
 import AppLayout from "../components/layout/AppLayout";
@@ -52,12 +60,14 @@ export default function AppRouter() {
       <Routes>
         <Route path="/" element={<AppLayout />}>
           <Route index element={<HomePage />} />
+          <Route path="printing-points" element={<PrintingPointsPage />} />
+          <Route path="estimate" element={<EstimatePage />} />
           <Route path="signin" element={<SignInPage />} />
           <Route path="signup" element={<SignUpPage />} />
 
           {/* Protected routes */}
           <Route
-            path="client/*"
+            path="client"
             element={
               <RequireAuth>
                 <RequireRole allowedRoles={["CLIENT"]}>
@@ -65,9 +75,14 @@ export default function AppRouter() {
                 </RequireRole>
               </RequireAuth>
             }
-          />
+          >
+            <Route index element={<ClientOverviewPage />} />
+            <Route path="orders" element={<ClientOrdersPage />} />
+            <Route path="orders/new" element={<ClientNewOrderPage />} />
+            <Route path="orders/:orderId" element={<ClientOrderDetailsPage />} />
+          </Route>
           <Route
-            path="employee/*"
+            path="employee"
             element={
               <RequireAuth>
                 <RequireRole allowedRoles={["EMPLOYEE", "ADMIN"]}>
@@ -75,7 +90,10 @@ export default function AppRouter() {
                 </RequireRole>
               </RequireAuth>
             }
-          />
+          >
+            <Route index element={<EmployeeQueueListPage />} />
+            <Route path="orders/:orderId" element={<EmployeeOrderDetailsPage />} />
+          </Route>
           <Route
             path="manager/*"
             element={

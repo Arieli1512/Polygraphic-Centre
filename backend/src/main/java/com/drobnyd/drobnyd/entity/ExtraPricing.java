@@ -22,6 +22,20 @@ import lombok.ToString;
 @ToString(onlyExplicitlyIncluded = true)
 public class ExtraPricing {
 
+    public static ExtraPricing forPrintingPoint(
+            PrintingPoint printingPoint,
+            Long bindingPrice,
+            Long staplingPrice,
+            Long coverPrice) {
+        ExtraPricing extraPricing = new ExtraPricing();
+        extraPricing.setPrintingPoint(printingPoint);
+        extraPricing.setPrintingPointId(printingPoint.getPrintingPointId());
+        extraPricing.setBindingPrice(bindingPrice);
+        extraPricing.setStaplingPrice(staplingPrice);
+        extraPricing.setCoverPrice(coverPrice);
+        return extraPricing;
+    }
+
     @Id
     @Column(name = "printing_point_id", nullable = false, updatable = false)
     @ToString.Include
