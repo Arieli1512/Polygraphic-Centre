@@ -55,7 +55,8 @@ export default function ClientNewOrderPage() {
   const [pointDetails, setPointDetails] = useState<PrintingPointDetails | null>(null);
   const [form, setForm] = useState<PriceEstimateRequest>(defaultRequest());
   const [estimate, setEstimate] = useState<PriceEstimate | null>(null);
-  const [pickupAt, setPickupAt] = useState("");
+  const [pickupDate, setPickupDate] = useState("");
+  const [pickupTime, setPickupTime] = useState("");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [uploadedPath, setUploadedPath] = useState<string | null>(null);
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -112,6 +113,36 @@ export default function ClientNewOrderPage() {
     ];
   }, [form.format, pointDetails?.rateOptions]);
 
+  const validatePickupAt = (): string | null => {
+    if (!pickupDate || !pickupTime) {
+      return "Wybierz date i godzine odbioru przed wysylka pliku.";
+    }
+
+    const parsed = new Date(`${pickupDate}T${pickupTime}:00`);
+    if (Number.isNaN(parsed.getTime())) {
+      return "Podany termin odbioru jest niepoprawny.";
+    }
+
+    if (parsed.getTime() <= Date.now()) {
+      return "Termin odbioru musi byc pozniejszy niz aktualny czas.";
+    }
+
+    return null;
+  };
+
+  const pickupAtIso = useMemo(() => {
+    if (!pickupDate || !pickupTime) {
+      return null;
+    }
+
+    const parsed = new Date(`${pickupDate}T${pickupTime}:00`);
+    if (Number.isNaN(parsed.getTime())) {
+      return null;
+    }
+
+    return parsed.toISOString();
+  }, [pickupDate, pickupTime]);
+
   const recalculate = async () => {
     setBusy(true);
     setError(null);
@@ -130,6 +161,12 @@ export default function ClientNewOrderPage() {
   };
 
   const uploadFile = async () => {
+    const pickupValidationError = validatePickupAt();
+    if (pickupValidationError) {
+      setError(pickupValidationError);
+      return;
+    }
+
     if (!selectedFile) {
       setError("Najpierw wybierz plik PDF.");
       return;
@@ -169,8 +206,9 @@ export default function ClientNewOrderPage() {
       return;
     }
 
-    if (!pickupAt) {
-      setError("Wybierz termin odbioru.");
+    const pickupValidationError = validatePickupAt();
+    if (pickupValidationError || !pickupAtIso) {
+      setError(pickupValidationError ?? "Wybierz poprawny termin odbioru.");
       return;
     }
 
@@ -182,7 +220,7 @@ export default function ClientNewOrderPage() {
       const payload: CreateOrderPayload = {
         ...form,
         filePath: uploadedPath,
-        pickupAt: new Date(pickupAt).toISOString(),
+        pickupAt: pickupAtIso,
       };
 
       const result = await createClientOrder(payload);
@@ -218,12 +256,22 @@ export default function ClientNewOrderPage() {
         </TextField>
 
         <TextField
-          type="datetime-local"
+          type="date"
           fullWidth
-          label="Termin odbioru"
-          value={pickupAt}
+          label="Data odbioru"
+          value={pickupDate}
           InputLabelProps={{ shrink: true }}
-          onChange={(event) => setPickupAt(event.target.value)}
+          onChange={(event) => setPickupDate(event.target.value)}
+        />
+
+        <TextField
+          type="time"
+          fullWidth
+          label="Godzina odbioru"
+          value={pickupTime}
+          InputLabelProps={{ shrink: true }}
+          inputProps={{ step: 300 }}
+          onChange={(event) => setPickupTime(event.target.value)}
         />
       </Stack>
 

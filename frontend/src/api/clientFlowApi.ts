@@ -3,6 +3,8 @@ import type { ApiSuccessResponse } from "../types/api";
 import type {
   AdminOperator,
   AdminPrintingPoint,
+  ClientWalletSnapshot,
+  ClientWalletTopUpResult,
   CreateOrderPayload,
   EmployeeDownloadLinkResult,
   EmployeeInProgressResult,
@@ -63,6 +65,24 @@ export async function createUploadRequest(
   const response = await api.post<ApiSuccessResponse<UploadRequestResult>>(
     "/v1/files/upload-requests",
     payload,
+  );
+  return unwrapData(response.data);
+}
+
+export async function fetchClientWalletSnapshot(): Promise<ClientWalletSnapshot> {
+  const response =
+    await api.get<ApiSuccessResponse<ClientWalletSnapshot>>(
+      "/v1/client/wallet",
+    );
+  return unwrapData(response.data);
+}
+
+export async function topUpClientWallet(
+  amount: number,
+): Promise<ClientWalletTopUpResult> {
+  const response = await api.post<ApiSuccessResponse<ClientWalletTopUpResult>>(
+    "/v1/client/wallet/top-ups",
+    { amount },
   );
   return unwrapData(response.data);
 }

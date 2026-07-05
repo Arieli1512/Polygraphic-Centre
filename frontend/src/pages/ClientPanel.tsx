@@ -9,6 +9,7 @@ interface ClientNavItem {
 const navItems: ClientNavItem[] = [
   { label: "Przegladaj drukarnie", path: "/printing-points" },
   { label: "Kalkulator", path: "/estimate" },
+  { label: "Portfel", path: "/client/wallet" },
   { label: "Nowe zamowienie", path: "/client/orders/new" },
   { label: "Historia", path: "/client/orders" },
 ];

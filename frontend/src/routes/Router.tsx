@@ -8,6 +8,7 @@ import ClientOverviewPage from "../pages/ClientOverviewPage";
 import ClientOrdersPage from "../pages/ClientOrdersPage";
 import ClientOrderDetailsPage from "../pages/ClientOrderDetailsPage";
 import ClientNewOrderPage from "../pages/ClientNewOrderPage";
+import ClientWalletPage from "../pages/ClientWalletPage";
 import PrintingPointsPage from "../pages/PrintingPointsPage";
 import EstimatePage from "../pages/EstimatePage";
 import EmployeeQueue from "../pages/EmployeeQueue";
@@ -77,6 +78,7 @@ export default function AppRouter() {
             }
           >
             <Route index element={<ClientOverviewPage />} />
+            <Route path="wallet" element={<ClientWalletPage />} />
             <Route path="orders" element={<ClientOrdersPage />} />
             <Route path="orders/new" element={<ClientNewOrderPage />} />
             <Route path="orders/:orderId" element={<ClientOrderDetailsPage />} />

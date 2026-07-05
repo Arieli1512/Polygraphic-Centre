@@ -83,6 +83,28 @@ export interface UploadRequestResult {
   uploadHeaders: Record<string, string>;
 }
 
+export interface WalletTopUpEntry {
+  topUpId: number;
+  amount: number;
+  createdAt: string;
+}
+
+export interface ClientWalletSnapshot {
+  clientId: number;
+  balance: number;
+  status: "ACTIVE" | "BLOCKED" | "CLOSED";
+  updatedAt: string;
+  topUps: WalletTopUpEntry[];
+}
+
+export interface ClientWalletTopUpResult {
+  clientId: number;
+  topUpId: number;
+  amount: number;
+  balance: number;
+  createdAt: string;
+}
+
 export interface CreateOrderPayload extends PriceEstimateRequest {
   filePath: string;
   pickupAt: string;

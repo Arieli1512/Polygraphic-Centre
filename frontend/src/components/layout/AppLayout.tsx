@@ -33,6 +33,7 @@ function buildNavigationItems(role: "CLIENT" | "EMPLOYEE" | "ADMIN" | undefined)
     return [
       ...common,
       { label: "Panel klienta", path: "/client", exact: true },
+      { label: "Portfel", path: "/client/wallet" },
       { label: "Nowe zamowienie", path: "/client/orders/new" },
       { label: "Historia zamowien", path: "/client/orders", excludePrefixes: ["/client/orders/new"] },
     ];

@@ -1,5 +1,7 @@
 package com.drobnyd.drobnyd.service;
 
+import java.util.List;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -34,6 +36,17 @@ public class BalanceService {
                 wallet.getBalance(),
                 requiredAmount,
                 wallet.getBalance() >= requiredAmount);
+    }
+
+    @Transactional(readOnly = true)
+    public Wallet getWallet(Integer clientId) {
+        return requireActiveWallet(clientId);
+    }
+
+    @Transactional(readOnly = true)
+    public List<WalletTopUp> getTopUps(Integer clientId) {
+        requireActiveWallet(clientId);
+        return walletTopUpRepository.findByWallet_ClientIdOrderByCreatedAtDesc(clientId);
     }
 
     @Transactional
