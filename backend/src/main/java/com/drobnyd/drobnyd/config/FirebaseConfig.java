@@ -32,18 +32,43 @@ public class FirebaseConfig {
         }
 
         try {
-            FirebaseOptions options = FirebaseOptions.builder()
-                    .setCredentials(resolveCredentials())
-                    .build();
+            String projectId = resolveProjectId();
+
+            FirebaseOptions.Builder optionsBuilder = FirebaseOptions.builder()
+                    .setCredentials(resolveCredentials());
+            if (projectId != null) {
+                optionsBuilder.setProjectId(projectId);
+            }
+
+            FirebaseOptions options = optionsBuilder.build();
 
             FirebaseApp.initializeApp(options);
-            log.info("Firebase Admin SDK initialized successfully using {}",
+            log.info("Firebase Admin SDK initialized successfully using {} (projectId={})",
                     firebaseAdminProperties.useApplicationDefaultCredentials()
                             ? "Application Default Credentials"
-                            : "classpath service account resource " + firebaseAdminProperties.serviceAccountResource());
+                            : "classpath service account resource " + firebaseAdminProperties.serviceAccountResource(),
+                    projectId == null ? "not-set" : projectId);
         } catch (IOException e) {
             throw new IllegalStateException("Failed to initialize Firebase Admin SDK", e);
         }
+    }
+
+    private String resolveProjectId() {
+        if (firebaseAdminProperties.projectId() != null) {
+            return firebaseAdminProperties.projectId();
+        }
+
+        String googleCloudProject = System.getenv("GOOGLE_CLOUD_PROJECT");
+        if (googleCloudProject != null && !googleCloudProject.isBlank()) {
+            return googleCloudProject;
+        }
+
+        String gcloudProject = System.getenv("GCLOUD_PROJECT");
+        if (gcloudProject != null && !gcloudProject.isBlank()) {
+            return gcloudProject;
+        }
+
+        return null;
     }
 
     private GoogleCredentials resolveCredentials() throws IOException {

@@ -87,7 +87,7 @@ services:
         ports:
             - "5432:5432"
         volumes:
-            - postgres_data:/var/lib/postgresql/data
+            - postgres_data:/var/lib/postgresql
             - ./init:/docker-entrypoint-initdb.d:ro
 
 volumes:
@@ -96,10 +96,24 @@ volumes:
 
 Notes:
 
-- Use `/var/lib/postgresql/data`, not `/var/lib/postgresql`.
+- For `postgres:18`, use `/var/lib/postgresql` as the volume mount point.
 - The `init` scripts run only on first initialization of an empty data volume.
 - If you want to reuse the SQL files from this repo, copy `db/init/` onto the VM next to that Compose file.
 - Use a strong password here and store the same value in Secret Manager for the backend.
+
+If you previously used `/var/lib/postgresql/data` with an older image or config and now see startup errors, do one of these:
+
+1. No data to keep (fastest):
+    - Stop and remove the container plus volume.
+    - Update Compose to mount `/var/lib/postgresql`.
+    - Start again to initialize a fresh cluster.
+
+2. Data must be preserved:
+    - Start the old setup temporarily and take a logical backup (`pg_dump` or `pg_dumpall`).
+    - Recreate the container with `postgres:18` and mount `/var/lib/postgresql`.
+    - Restore the dump into the new cluster.
+
+For production-like environments, use logical backup/restore or a proper major-version upgrade path (`pg_upgrade`) rather than forcing the old data directory into a new major image.
 
 ### 2.2. Start the container on the VM
 
@@ -296,7 +310,7 @@ gcloud run deploy backend-service \
     --vpc-connector=cr-backend-connector \
     --vpc-egress=private-ranges-only \
     --allow-unauthenticated \
-    --set-env-vars="SPRING_PROFILES_ACTIVE=prod,DB_URL=jdbc:postgresql://10.142.0.2:5432/drobnyd,APP_CORS_ALLOWED_ORIGINS=https://YOUR_FRONTEND_HOST" \
+    --set-env-vars="SPRING_PROFILES_ACTIVE=prod,DB_URL=jdbc:postgresql://10.142.0.2:5432/drobnyd,FIREBASE_PROJECT_ID=YOUR_FIREBASE_PROJECT_ID,APP_CORS_ALLOWED_ORIGINS=https://YOUR_FRONTEND_HOST" \
     --set-secrets="DB_USERNAME=db-username:latest,DB_PASSWORD=db-password:latest,APP_AUTH_JWT_SECRET=app-auth-jwt-secret:latest"
 ```
 
@@ -528,6 +542,7 @@ gcloud pubsub subscriptions create backend-order-events-sub \
 
 Set these on Cloud Run service:
 
+- `FIREBASE_PROJECT_ID=drobnyd-b1d45`
 - `PUBSUB_PROJECT_ID=drobnyd-b1d45`
 - `PUBSUB_ENABLED=true`
 - `PUBSUB_ORDER_EVENTS_TOPIC_NAME=order-events`
@@ -547,3 +562,98 @@ For SMTP, set also:
 - `MAIL_USERNAME`
 - `MAIL_PASSWORD`
 - `MAIL_FROM_ADDRESS`
+
+## 14. Frontend deployment on Firebase Hosting (recommended)
+
+This approach is the simplest integration for your current stack and free-tier goals:
+
+1. Frontend static files are served from Firebase Hosting.
+2. Requests to `/api/**` are rewritten to Cloud Run `backend-service`.
+3. Browser calls stay same-origin from frontend perspective (`/api/...`), which reduces CORS and cookie complexity.
+
+### 14.1. Files already prepared in this repo
+
+- [frontend/firebase.json](frontend/firebase.json): serves `dist/`
+- [frontend/firebase.json](frontend/firebase.json): rewrites `/api/**` to Cloud Run service `backend-service` in `us-east1`
+- [frontend/firebase.json](frontend/firebase.json): rewrites all other routes to `/index.html` (SPA fallback)
+- [frontend/.firebaserc.example](frontend/.firebaserc.example): template for Firebase project binding
+- [frontend/src/api/api.ts](frontend/src/api/api.ts): defaults API base URL to `/api` if env var is not set
+
+If your Cloud Run backend service name or region differs, update [frontend/firebase.json](frontend/firebase.json).
+
+### 14.2. One-time Firebase setup for Hosting
+
+From `frontend/`:
+
+```bash
+firebase login
+firebase use YOUR_PROJECT_ID
+```
+
+Or copy [frontend/.firebaserc.example](frontend/.firebaserc.example) to `.firebaserc` and set your project id.
+
+Enable Hosting in Firebase console if not yet enabled.
+
+### 14.3. Build and deploy frontend
+
+From `frontend/`:
+
+```bash
+npm ci
+npm run build
+firebase deploy --only hosting
+```
+
+On this Windows setup, prefer `npm.cmd` instead of `npm` if PowerShell blocks `npm.ps1`:
+
+```powershell
+npm.cmd ci
+npm.cmd run build
+firebase deploy --only hosting
+```
+
+### 14.4. Backend settings when using Hosting rewrites
+
+Even with rewrites, keep backend origin restrictions explicit.
+
+Set on Cloud Run:
+
+- `APP_CORS_ALLOWED_ORIGINS=https://YOUR_PROJECT_ID.web.app,https://YOUR_PROJECT_ID.firebaseapp.com`
+- `APP_AUTH_COOKIE_SECURE=true`
+- `APP_AUTH_COOKIE_SAME_SITE=None`
+
+Because Firebase Hosting forwards requests to Cloud Run, your backend still receives browser traffic through HTTPS and cookies remain valid.
+
+### 14.5. Frontend env values (production)
+
+For production build, use Firebase config from your Firebase project and keep API base URL as relative path:
+
+```text
+VITE_API_BASE_URL=/api
+VITE_FIREBASE_API_KEY=...
+VITE_FIREBASE_AUTH_DOMAIN=...
+VITE_FIREBASE_PROJECT_ID=...
+VITE_FIREBASE_STORAGE_BUCKET=...
+VITE_FIREBASE_MESSAGING_SENDER_ID=...
+VITE_FIREBASE_APP_ID=...
+VITE_FIREBASE_MEASUREMENT_ID=...
+```
+
+The repo [frontend/.env.example](frontend/.env.example) remains local-dev oriented (`http://localhost:8080/api`).
+
+### 14.6. Deploy order with backend
+
+Use this order to avoid broken rewrites:
+
+1. Deploy backend Cloud Run first.
+2. Confirm backend URL works and healthy.
+3. Deploy Firebase Hosting.
+4. Verify frontend calls `/api/auth/csrf` and `/api/auth/session` through Hosting domain.
+
+### 14.7. Verification checklist after frontend deploy
+
+1. Open `https://YOUR_PROJECT_ID.web.app`.
+2. In browser DevTools Network, confirm API requests go to `https://YOUR_PROJECT_ID.web.app/api/...`.
+3. Confirm login works and cookies are set.
+4. Confirm hard refresh on non-root route (for example `/signin`) works (SPA rewrite).
+5. Confirm no CORS errors in browser console.

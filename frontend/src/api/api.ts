@@ -19,9 +19,7 @@ interface RetryableRequestConfig extends InternalAxiosRequestConfig {
  */
 const api = axios.create({
   baseURL:
-    import.meta.env.VITE_API_BASE_URL ??
-    import.meta.env.VITE_API_URL ??
-    "http://localhost:8080/api",
+    import.meta.env.VITE_API_BASE_URL ?? import.meta.env.VITE_API_URL ?? "/api",
   // Enable credentials to include httpOnly cookies in requests
   withCredentials: true,
   // Axios only sends the XSRF header automatically for same-origin requests.

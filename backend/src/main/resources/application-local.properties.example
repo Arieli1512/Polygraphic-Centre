@@ -9,6 +9,7 @@ spring.datasource.password=change-me
 # Firebase Admin SDK
 firebase.admin.use-application-default-credentials=false
 firebase.admin.service-account-resource=firebase-service-account.json
+firebase.admin.project-id=your-firebase-project-id
 
 # Session auth (HttpOnly cookies + refresh token)
 app.auth.jwt-secret=change-me-in-local-env
