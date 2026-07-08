@@ -14,6 +14,35 @@ import org.springframework.web.util.WebUtils;
 
 import com.drobnyd.drobnyd.config.properties.AuthProperties;
 
+/**
+ * HTTP-only session cookie management.
+ * 
+ * Responsible for creating and clearing session cookies (access token and
+ * refresh token).
+ * All cookies are httpOnly to prevent XSS attacks.
+ * 
+ * IMPORTANT: Cookie Domain Configuration
+ * ======================================
+ * 
+ * When deployed behind a reverse proxy (e.g., Firebase Hosting with rewrites),
+ * the explicit cookie domain MUST be configured, otherwise cookies will not be
+ * sent on subsequent requests.
+ * 
+ * Problem: Without explicit domain, the browser defaults to "host-only"
+ * cookies,
+ * which are only sent when the hostname matches exactly. When Firebase Hosting
+ * rewrites /api/** to Cloud Run backend, the backend sets the cookie for its
+ * internal hostname. Subsequent requests from the browser go to the Firebase
+ * domain, causing a mismatch and the cookie is not sent.
+ * 
+ * Solution: Set APP_AUTH_COOKIE_DOMAIN environment variable to a shared domain:
+ * - For Firebase Hosting: APP_AUTH_COOKIE_DOMAIN=.firebaseapp.com (note the
+ * dot)
+ * - For specific domain: APP_AUTH_COOKIE_DOMAIN=PROJECT_ID.web.app (no dot)
+ * - For local development: Leave empty (host-only is fine for localhost)
+ * 
+ * Reference: See gcp_instructions.md sections 14.4 and 13.6
+ */
 @Service
 @SuppressWarnings("unused")
 public class AuthCookieService {
@@ -66,13 +95,24 @@ public class AuthCookieService {
     }
 
     private ResponseCookie buildCookie(String name, String value, long maxAgeSeconds, String path) {
-        return ResponseCookie.from(name, value)
+        var builder = ResponseCookie.from(name, value)
                 .httpOnly(true)
                 .secure(authProperties.cookieSecure())
                 .path(path)
                 .sameSite(authProperties.cookieSameSite())
-                .maxAge(maxAgeSeconds)
-                .build();
+                .maxAge(maxAgeSeconds);
+
+        // When deployed behind a reverse proxy (e.g., Firebase Hosting rewrites),
+        // explicitly set the domain so cookies are accessible across the proxy
+        // boundary.
+        // For development or when not specified, leave domain unset (host-only
+        // cookies).
+        String domain = authProperties.cookieDomain();
+        if (domain != null && !domain.isBlank()) {
+            builder.domain(domain);
+        }
+
+        return builder.build();
     }
 
     private String buildSessionCookie(String name, String path) {

@@ -10,7 +10,8 @@ public record AuthProperties(
         long refreshTokenTtlDays,
         String cookiePath,
         boolean cookieSecure,
-        String cookieSameSite) {
+        String cookieSameSite,
+        String cookieDomain) {
 
     public AuthProperties {
         jwtSecret = defaultString(jwtSecret, "polygraphic-centre-dev-secret");
@@ -18,6 +19,7 @@ public record AuthProperties(
         accessTokenTtlMinutes = accessTokenTtlMinutes <= 0 ? 15 : accessTokenTtlMinutes;
         refreshTokenTtlDays = refreshTokenTtlDays <= 0 ? 7 : refreshTokenTtlDays;
         cookiePath = defaultString(cookiePath, "/");
+        cookieDomain = defaultString(cookieDomain, null);
         cookieSameSite = defaultString(cookieSameSite, "Lax");
     }
 

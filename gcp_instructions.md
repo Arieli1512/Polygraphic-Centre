@@ -53,26 +53,198 @@ gcloud services enable \
     storage.googleapis.com
 ```
 
-## 2. Run PostgreSQL in Docker on the VM and keep it private
+## 2. Run PostgreSQL on a hardened Debian VM (Docker, private only)
 
-Your VM currently has:
+This section defines a safer baseline for running PostgreSQL in Docker on Compute Engine and connecting from Cloud Run.
 
-- Internal IP: `10.142.0.2`
-- External IP: `34.74.134.84`
-- Region target for Cloud Run: `us-east1`
+### 2.1. Recommended network model
 
-Do not connect Cloud Run to PostgreSQL over the VM external IP. Run PostgreSQL in a Docker container on the VM, publish it on the VM host port `5432`, and reach it from Cloud Run over the VM internal IP through a Serverless VPC Access connector.
+1. VM has no external IP.
+2. Cloud Run reaches PostgreSQL through Serverless VPC Access connector.
+3. PostgreSQL only listens on VM internal network.
+4. Firewall allows port `5432` only from connector CIDR.
 
-Important repo note:
+If you need shell access to a VM without external IP, use IAP SSH from Cloud Shell or gcloud (`--tunnel-through-iap`).
 
-- The existing repo-level [docker-compose.yml](docker-compose.yml) is local-development oriented. It publishes `5433:5432` and uses default local credentials.
-- For the VM deployment, use a VM-specific Compose file that publishes `5432:5432` and uses your real database credentials.
+### 2.2. Use static internal IP for stability
 
-### 2.1. Create a VM-specific Compose setup
+Do not depend on ephemeral internal VM address for database connection strings.
 
-On the VM, create a working directory such as `/opt/polygraphic-centre-db` and place a Compose file there.
+Reserve a static internal IP in the subnet:
 
-Example `compose.yaml` for the VM:
+```bash
+export PROJECT_ID="YOUR_PROJECT_ID"
+export REGION="us-east1"
+export ZONE="us-east1-b"
+export NETWORK="default"
+export SUBNET="default"
+
+gcloud compute addresses create pg-internal-ip \
+    --project="$PROJECT_ID" \
+    --region="$REGION" \
+    --subnet="$SUBNET"
+```
+
+Read the reserved IP:
+
+```bash
+gcloud compute addresses describe pg-internal-ip \
+    --project="$PROJECT_ID" \
+    --region="$REGION" \
+    --format="value(address)"
+```
+
+### 2.3. Create or recreate VM without external IP (free-tier-oriented + hardened)
+
+Cost-oriented defaults:
+
+1. Prefer `e2-micro` in a free-tier eligible US region (`us-east1`, `us-west1`, or `us-central1`).
+2. Use `pd-standard` (not SSD) and keep disk minimal (for example `20GB` if enough for your workload).
+3. Keep no external IP and use IAP for admin access.
+4. Enable Shielded VM and OS Login.
+
+```bash
+export VM_NAME="postgres-db-vm"
+export STATIC_IP="REPLACE_WITH_RESERVED_INTERNAL_IP"
+
+gcloud compute instances create "$VM_NAME" \
+    --project="$PROJECT_ID" \
+    --zone="$ZONE" \
+    --machine-type=e2-micro \
+    --network-interface=network="$NETWORK",subnet="$SUBNET",private-network-ip="$STATIC_IP",no-address \
+    --image-family=debian-12 \
+    --image-project=debian-cloud \
+    --boot-disk-type=pd-standard \
+    --boot-disk-size=20GB \
+    --tags=postgres-vm \
+    --shielded-secure-boot \
+    --shielded-vtpm \
+    --shielded-integrity-monitoring \
+    --metadata=enable-oslogin=TRUE,block-project-ssh-keys=TRUE
+```
+
+If the VM already exists and has an external IP, remove it:
+
+```bash
+gcloud compute instances delete-access-config "$VM_NAME" \
+    --project="$PROJECT_ID" \
+    --zone="$ZONE" \
+    --access-config-name="external-nat"
+```
+
+### 2.4. Configure outbound internet for private VM (required before apt install)
+
+Without external IP and without Cloud NAT, `apt-get` and Docker package downloads will fail.
+
+Create Cloud Router + Cloud NAT once per VPC/region:
+
+```bash
+gcloud compute routers create cr-nat-router \
+    --project="$PROJECT_ID" \
+    --region="$REGION" \
+    --network="$NETWORK"
+
+gcloud compute routers nats create cr-nat-config \
+    --project="$PROJECT_ID" \
+    --router=cr-nat-router \
+    --router-region="$REGION" \
+    --nat-all-subnet-ip-ranges \
+    --auto-allocate-nat-external-ips
+```
+
+Verify NAT:
+
+```bash
+gcloud compute routers nats describe cr-nat-config \
+    --project="$PROJECT_ID" \
+    --router=cr-nat-router \
+    --router-region="$REGION"
+```
+
+### 2.5. Install Docker and Compose plugin on Debian (timeout-resistant)
+
+SSH into the VM (from Cloud Shell, optionally with IAP):
+
+```bash
+gcloud compute ssh "$VM_NAME" \
+    --project="$PROJECT_ID" \
+    --zone="$ZONE" \
+    --tunnel-through-iap
+```
+
+On the VM:
+
+```bash
+# If a stale Cloud SDK apt source exists and fails, remove it (not needed for runtime VM).
+sudo rm -f /etc/apt/sources.list.d/google-cloud-sdk.list
+
+# Force IPv4 for apt to avoid IPv6 reachability issues on some networks.
+echo 'Acquire::ForceIPv4 "true";' | sudo tee /etc/apt/apt.conf.d/99force-ipv4 > /dev/null
+echo 'Acquire::Retries "5";' | sudo tee /etc/apt/apt.conf.d/80retries > /dev/null
+
+sudo apt-get update
+sudo apt-get install -y ca-certificates curl gnupg git postgresql-client
+
+sudo install -m 0755 -d /etc/apt/keyrings
+curl -fsSL https://download.docker.com/linux/debian/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+sudo chmod a+r /etc/apt/keyrings/docker.gpg
+
+echo \
+  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/debian \
+  $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+sudo apt-get update
+sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+sudo systemctl enable --now docker
+
+# Optional: run docker without sudo in new sessions.
+sudo usermod -aG docker "$USER"
+
+docker --version
+docker compose version
+psql --version
+```
+
+If `apt-get update` still times out, validate outbound egress from VM:
+
+```bash
+curl -I https://deb.debian.org
+curl -I https://download.docker.com
+```
+
+### 2.6. Host hardening baseline (Debian)
+
+On the VM:
+
+```bash
+sudo apt-get install -y unattended-upgrades fail2ban
+sudo dpkg-reconfigure -plow unattended-upgrades
+```
+
+Recommended:
+
+1. Keep SSH only through IAP or trusted admin CIDRs.
+2. Keep `block-project-ssh-keys=TRUE` and use OS Login IAM for access control.
+3. Keep only required ingress open (here only `5432` from connector CIDR).
+4. Do not run unrelated workloads on this VM.
+5. Rotate database credentials after incidents.
+
+### 2.7. Clone repository and prepare Docker Compose on VM
+
+On VM:
+
+```bash
+cd /opt
+sudo mkdir -p polygraphic-centre
+sudo chown "$USER":"$USER" polygraphic-centre
+
+git clone https://github.com/YOUR_ORG/Polygraphic-Centre.git /opt/polygraphic-centre
+cd /opt/polygraphic-centre
+```
+
+For database runtime, keep a VM-specific compose file instead of local-dev root compose.
+
+Create `/opt/polygraphic-centre/deploy/compose.db.vm.yaml`:
 
 ```yaml
 services:
@@ -88,72 +260,48 @@ services:
             - "5432:5432"
         volumes:
             - postgres_data:/var/lib/postgresql
-            - ./init:/docker-entrypoint-initdb.d:ro
+            - ../db/init:/docker-entrypoint-initdb.d:ro
 
 volumes:
     postgres_data:
 ```
 
-Notes:
-
-- For `postgres:18`, use `/var/lib/postgresql` as the volume mount point.
-- The `init` scripts run only on first initialization of an empty data volume.
-- If you want to reuse the SQL files from this repo, copy `db/init/` onto the VM next to that Compose file.
-- Use a strong password here and store the same value in Secret Manager for the backend.
-
-If you previously used `/var/lib/postgresql/data` with an older image or config and now see startup errors, do one of these:
-
-1. No data to keep (fastest):
-    - Stop and remove the container plus volume.
-    - Update Compose to mount `/var/lib/postgresql`.
-    - Start again to initialize a fresh cluster.
-
-2. Data must be preserved:
-    - Start the old setup temporarily and take a logical backup (`pg_dump` or `pg_dumpall`).
-    - Recreate the container with `postgres:18` and mount `/var/lib/postgresql`.
-    - Restore the dump into the new cluster.
-
-For production-like environments, use logical backup/restore or a proper major-version upgrade path (`pg_upgrade`) rather than forcing the old data directory into a new major image.
-
-### 2.2. Start the container on the VM
-
-From the VM directory containing the Compose file:
+### 2.8. Start and verify PostgreSQL container
 
 ```bash
-docker compose up -d
-docker compose ps
-```
-
-Recommended checks:
-
-```bash
+cd /opt/polygraphic-centre
+docker compose -f deploy/compose.db.vm.yaml up -d
+docker compose -f deploy/compose.db.vm.yaml ps
 docker logs polygraphic-centre-postgres --tail=100
 sudo ss -ltnp | grep 5432
+
+# Validate local DB connectivity from VM using psql client.
+PGPASSWORD='CHANGE_ME_DB_PASSWORD' psql -h 127.0.0.1 -p 5432 -U drobnyd -d drobnyd -c 'select 1;'
 ```
 
-You want the host to be listening on `0.0.0.0:5432` or the VM private interface on `5432`.
+### 2.9. Restrict firewall to connector CIDR only
 
-### 2.3. Restrict network access to the database
+Cost note:
 
-You do not need the database exposed publicly just because the VM has an external IP.
+- Serverless VPC Access connector can be a meaningful monthly cost driver even when VM sizing is free-tier-friendly.
+- Monitor billing after enabling the connector and keep `--min-instances=0` on Cloud Run.
 
-Keep access private with these controls:
-
-1. Use the VM internal IP from Cloud Run.
-2. Open GCP firewall ingress only from the Serverless VPC Access connector CIDR.
-3. Do not create a broad firewall rule for `0.0.0.0/0` to port `5432`.
-4. Optionally add OS-level firewall rules on the VM as a second layer.
-
-Example connector setup:
+Create connector (if missing):
 
 ```bash
 gcloud compute networks vpc-access connectors create cr-backend-connector \
-    --region=us-east1 \
-    --network=default \
+    --project="$PROJECT_ID" \
+    --region="$REGION" \
+    --network="$NETWORK" \
     --range=10.8.0.0/28
+```
 
+Allow PostgreSQL only from connector range:
+
+```bash
 gcloud compute firewall-rules create allow-postgres-from-cloud-run \
-    --network=default \
+    --project="$PROJECT_ID" \
+    --network="$NETWORK" \
     --direction=INGRESS \
     --action=ALLOW \
     --rules=tcp:5432 \
@@ -161,33 +309,43 @@ gcloud compute firewall-rules create allow-postgres-from-cloud-run \
     --target-tags=postgres-vm
 ```
 
-Apply the `postgres-vm` network tag to the VM, then point the backend to:
+Do not create broad `0.0.0.0/0` ingress on `5432`.
+
+### 2.10. Cloud Run settings after VM changes
+
+If VM uses reserved static internal IP, keep backend DB URL stable:
 
 ```text
-jdbc:postgresql://10.142.0.2:5432/drobnyd
+DB_URL=jdbc:postgresql://STATIC_INTERNAL_IP:5432/drobnyd
 ```
 
-### 2.4. Match backend secrets to the container config
+If VM uses ephemeral internal IP and VM is recreated, update `DB_URL` in Cloud Run each time address changes.
 
-The backend deployment must use the same DB settings configured in the VM container:
+Cloud Run VPC connector settings remain the same as long as:
 
-- `DB_URL=jdbc:postgresql://10.142.0.2:5432/drobnyd`
-- `DB_USERNAME=drobnyd`
-- `DB_PASSWORD` must match `POSTGRES_PASSWORD` from the VM Compose file
+1. same VPC network is used,
+2. same connector region is used,
+3. firewall allows connector CIDR to VM.
 
-If you keep `POSTGRES_USER=postgres` instead, then `DB_USERNAME` must also be `postgres`.
+### 2.11. Match backend secrets to DB container
 
-### 2.5. Persistence and lifecycle
+Cloud Run must use the same credentials configured in PostgreSQL container:
 
-The named Docker volume keeps database data across container restarts.
+1. `DB_USERNAME` equals `POSTGRES_USER`.
+2. `DB_PASSWORD` equals `POSTGRES_PASSWORD` (from Secret Manager).
+3. `DB_URL` points to VM static internal IP and port `5432`.
 
-Be aware of these operational rules:
+### 2.12. Operations and recovery
 
-1. Changing `POSTGRES_PASSWORD` in Compose does not automatically rotate the password inside an already-initialized database volume.
-2. Changing files in `init/` does not re-run initialization against an existing volume.
-3. If you need to reinitialize from scratch, remove the volume explicitly and accept data loss.
+1. Use regular logical backups (`pg_dump`/`pg_dumpall`) and copy backups off-VM.
+2. Test restore procedure periodically.
+3. Rebuild VM from clean image after suspected compromise.
+4. Rotate DB password and `app-auth-jwt-secret` after incidents.
 
-For production-like operation on the VM, prefer backup and restore over volume deletion.
+If migrating from older Postgres volume layouts and `postgres:18` fails startup:
+
+1. If no data needed: recreate volume with new mount layout.
+2. If data needed: perform logical dump from old setup, then restore into new clean container.
 
 ## 3. Use a dedicated Cloud Run runtime service account
 
@@ -307,10 +465,12 @@ gcloud run deploy backend-service \
     --region="$REGION" \
     --platform=managed \
     --service-account="$BACKEND_SA" \
+    --min-instances=0 \
+    --max-instances=1 \
     --vpc-connector=cr-backend-connector \
     --vpc-egress=private-ranges-only \
     --allow-unauthenticated \
-    --set-env-vars="SPRING_PROFILES_ACTIVE=prod,DB_URL=jdbc:postgresql://10.142.0.2:5432/drobnyd,FIREBASE_PROJECT_ID=YOUR_FIREBASE_PROJECT_ID,APP_CORS_ALLOWED_ORIGINS=https://YOUR_FRONTEND_HOST" \
+    --set-env-vars="SPRING_PROFILES_ACTIVE=prod,DB_URL=jdbc:postgresql://10.142.0.2:5432/drobnyd,FIREBASE_PROJECT_ID=${PROJECT_ID},APP_CORS_ALLOWED_ORIGINS=https://YOUR_FRONTEND_HOST" \
     --set-secrets="DB_USERNAME=db-username:latest,DB_PASSWORD=db-password:latest,APP_AUTH_JWT_SECRET=app-auth-jwt-secret:latest"
 ```
 
@@ -318,7 +478,28 @@ Notes:
 
 - `--allow-unauthenticated` is usually required if the browser frontend talks directly to this backend.
 - If you use Firebase Hosting or another separate frontend origin, keep `APP_CORS_ALLOWED_ORIGINS` exact.
+- If `APP_CORS_ALLOWED_ORIGINS` must contain multiple origins (comma-separated), use custom dict delimiter syntax in `gcloud run services update`:
+
+```bash
+gcloud run services update backend-service \
+    --project="$PROJECT_ID" \
+    --region="$REGION" \
+    --update-env-vars="^@^APP_CORS_ALLOWED_ORIGINS=https://YOUR_PROJECT_ID.web.app,https://YOUR_PROJECT_ID.firebaseapp.com"
+```
+
+- Do not leave `FIREBASE_PROJECT_ID` as a placeholder value. Use the real Firebase project id (usually `${PROJECT_ID}`).
 - Because the frontend is cross-site relative to Cloud Run, production cookies should stay `Secure` and `SameSite=None`, which the `prod` profile already expects.
+- To avoid session consistency issues while you rely on instance-local state, keep Cloud Run at `--max-instances=1`.
+- Use `--min-instances=0` to stay scale-to-zero and reduce idle costs on free-tier-like usage.
+
+For an already deployed service, you can apply scaling limits without redeploying image:
+
+```bash
+gcloud run services update backend-service \
+    --region="$REGION" \
+    --min-instances=0 \
+    --max-instances=1
+```
 
 ## 8. Verify the deployment before adding Pub/Sub push
 
@@ -335,7 +516,25 @@ Recommended quick checks:
 ```bash
 gcloud run services describe backend-service --region="$REGION"
 gcloud run services logs read backend-service --region="$REGION" --limit=100
+
+# Verify active runtime env values (especially CORS and Firebase project id)
+gcloud run services describe backend-service \
+    --project="$PROJECT_ID" \
+    --region="$REGION" \
+    --format="yaml(spec.template.spec.containers[0].env)"
+
+# Verify startup CORS configuration line
+gcloud run services logs read backend-service \
+    --project="$PROJECT_ID" \
+    --region="$REGION" \
+    --limit=200 | grep -i "CORS configured for origins"
 ```
+
+If login fails with Firebase audience mismatch (`incorrect "aud" claim`), verify:
+
+1. `FIREBASE_PROJECT_ID` equals the real Firebase project id.
+2. Frontend Firebase config points to the same project id.
+3. No stale placeholder value like `YOUR_FIREBASE_PROJECT_ID` remains in Cloud Run env vars.
 
 Only after these checks pass should you add external event delivery.
 
@@ -553,6 +752,7 @@ Set these on Cloud Run service:
 - `GCS_BUCKET_NAME=my-free-app-bucket-drobnyd-b1d45`
 - `GCS_UPLOAD_ROOT_PREFIX=clients`
 - `GCS_SIGNING_SERVICE_ACCOUNT_EMAIL=backend-runtime@drobnyd-b1d45.iam.gserviceaccount.com`
+- `APP_AUTH_COOKIE_DOMAIN=.firebaseapp.com` (or `.web.app` for Firebase Hosting rewrite)
 - `MAIL_ENABLED=true` (only when SMTP credentials are configured)
 
 For SMTP, set also:
@@ -562,6 +762,24 @@ For SMTP, set also:
 - `MAIL_USERNAME`
 - `MAIL_PASSWORD`
 - `MAIL_FROM_ADDRESS`
+
+For existing deployments, update critical auth/CORS vars with delimiter-safe syntax:
+
+```bash
+gcloud run services update backend-service \
+    --project="$PROJECT_ID" \
+    --region="$REGION" \
+    --update-env-vars="^@^SPRING_PROFILES_ACTIVE=prod@FIREBASE_PROJECT_ID=${PROJECT_ID}@APP_CORS_ALLOWED_ORIGINS=https://${PROJECT_ID}.web.app,https://${PROJECT_ID}.firebaseapp.com@APP_AUTH_COOKIE_SECURE=true@APP_AUTH_COOKIE_SAME_SITE=None"
+```
+
+Then verify applied values:
+
+```bash
+gcloud run services describe backend-service \
+    --project="$PROJECT_ID" \
+    --region="$REGION" \
+    --format="yaml(spec.template.spec.containers[0].env)"
+```
 
 ## 14. Frontend deployment on Firebase Hosting (recommended)
 
@@ -621,6 +839,9 @@ Set on Cloud Run:
 - `APP_CORS_ALLOWED_ORIGINS=https://YOUR_PROJECT_ID.web.app,https://YOUR_PROJECT_ID.firebaseapp.com`
 - `APP_AUTH_COOKIE_SECURE=true`
 - `APP_AUTH_COOKIE_SAME_SITE=None`
+- `APP_AUTH_COOKIE_DOMAIN=.firebaseapp.com` (CRITICAL for Firefox Hosting rewrites)
+
+**Critical cookie domain note**: When Firebase Hosting rewrites `/api/**` to Cloud Run backend, the browser receives the response through the Firebase Hosting origin. Without an explicit cookie domain, the browser stores cookies as "host-only" and won't send them on subsequent requests because the hostname has changed. Setting `APP_AUTH_COOKIE_DOMAIN=.firebaseapp.com` allows the cookie to work across the rewrite boundary. Alternatively, use the full domain like `APP_AUTH_COOKIE_DOMAIN=PROJECT_ID.web.app` (without the leading dot if using exact domain match).
 
 Because Firebase Hosting forwards requests to Cloud Run, your backend still receives browser traffic through HTTPS and cookies remain valid.
 
