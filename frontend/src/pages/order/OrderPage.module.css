@@ -110,3 +110,17 @@
     border-color: var(--text-h);
     color: var(--bg);
 }
+
+.orderButton:disabled {
+    background-color: var(--bg);
+    border-color: var(--accent);
+    color: var(--accent-bg);
+}
+
+.icon_spin {
+    grid-column-start: 1;
+    grid-column-end: 4;
+    width: fit-content;
+    justify-self: center;
+    color: var(--bg);
+}

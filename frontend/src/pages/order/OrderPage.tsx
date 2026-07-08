@@ -10,6 +10,7 @@ import {useLocation, useNavigate} from "react-router-dom";
 import {useParams} from "react-router";
 import {createNewOrderMutation, type Order} from "../../api/apiOrders.ts";
 import type {PrintSettings} from "../../api/apiPrintSettings.ts";
+import { ImSpinner2 } from "react-icons/im";
 
 const now = new Date();
 if (now.getHours() > 13) now.setDate(now.getDate()+1);
@@ -31,14 +32,14 @@ export const OrderPage: React.FC = () => {
     const id_param_tmp = useParams().id;
     const id_param: number | null = !id_param_tmp ? (!editingOrder ? null : editingOrder.printing_point_id) : parseInt(id_param_tmp);
 
-    const mutationNewOrder = useMutation(createNewOrderMutation());
     const [limitShownPrintingPoints, setLimitShownPrintingPoints] = useState<number | null>(id_param);
 
     const [printingPointId, setPrintingPointId] = useState(id_param);
-    const {data: PrintingPointRateSheetData} = useQuery(createGetPrintingPointRateSheetQuery(printingPointId ?? -1));
-    const {data: PrintingPointExtraPricingData} = useQuery(createGetPrintingPointExtraPricingQuery(printingPointId ?? -1));
+    const {data: PrintingPointRateSheetData, isPending: RateSheetQueryIsPending} = useQuery(createGetPrintingPointRateSheetQuery(printingPointId ?? -1));
+    const {data: PrintingPointExtraPricingData, isPending: PrintingPointQueryIsPending} = useQuery(createGetPrintingPointExtraPricingQuery(printingPointId ?? -1));
     const [newFile, setNewFile] = useState(!editing);
     const [filePath, setFilePath] = useState(editingOrder?.file_path ?? undefined);
+    const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [pageCount, setPageCount] = useState(editingOrder?.page_count ?? 1);
     const [pickupAt, setPickupAt] = useState(editingOrder?.pickup_at.slice(0,16) ?? formattedDateTime);
     const [format, setFormat] = useState(editingOrderDetails?.format ?? 'A3');
@@ -49,10 +50,26 @@ export const OrderPage: React.FC = () => {
     const [finishing, setFinishing] = useState(editingOrderDetails?.finishing ?? 'NONE');
     const [copies, setCopies] = useState(editingOrderDetails?.copies ?? 1);
 
+    const mutationNewOrder = useMutation({...createNewOrderMutation(),
+        onSuccess: () => {
+            setNewFile(true);
+            setFilePath(undefined);
+            setSelectedFile(null);
+            setPageCount(1);
+            setPickupAt(formattedDateTime);
+            setFormat('A3');
+            setPaperType('standardowy');
+            setColorMode('COLOR');
+            setDuplex('SINGLE_SIDED');
+            setOrient('PORTRAIT');
+            setFinishing('NONE');
+            setCopies(1);
+        }});
+
 
     let costValidity = true;
     let cost = 0;
-    if (!printingPointId|| !PrintingPointRateSheetData) costValidity = false;
+    if (!printingPointId || !PrintingPointRateSheetData) costValidity = false;
     else {
         let rate = PrintingPointRateSheetData.find((rs) => (rs.format == format && rs.paper_type == paperType) )?.page_price;
         if (!rate) rate = PrintingPointRateSheetData.find((rs) => (rs.format == format) )?.page_price;
@@ -91,7 +108,6 @@ export const OrderPage: React.FC = () => {
 
                       if (role === 'GOSC') {
                           navigate('/login');
-                          e.preventDefault();
                           return;
                       }
 
@@ -120,35 +136,27 @@ export const OrderPage: React.FC = () => {
                           newOrderDetails.order_id = editingOrder.order_id;
                       }
                       if (newFile) {
-                          const fileInput = document.getElementById("fileInput") as HTMLInputElement;
-                          if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
-                              alert("No file found");
-                              e.preventDefault();
+                          if (selectedFile) {
+                              formData.append("document", selectedFile);
+                          } else {
+                              alert("No file found")
                               return;
                           }
-                          const file = fileInput.files[0];
-                          if (!file) {
-                              alert("No file found");
-                              e.preventDefault();
-                              return;
-                          }
-                          formData.append("document", file);
-
                       }
 
                       formData.append("order", JSON.stringify(newOrder));
                       formData.append("print_settings", JSON.stringify(newOrderDetails));
 
-                      mutationNewOrder.mutate(formData)
+                      mutationNewOrder.mutate(formData);
                   }}>
 
                 <div className={styles.priceCalculatorPrintingPointChoice}>
                     <label className={styles.priceCalculatorLabel}> Punkt Druku </label>
                     <br/>
-                    <LimitShownPrintingPointsContext value={{id: limitShownPrintingPoints, hideDetails: false}}>
+                    <LimitShownPrintingPointsContext value={{id: limitShownPrintingPoints, hideDetails: false, disabled: false}}>
                         <div className={styles.priceCalculatorPrintingPointChoiceContainer} onClick={(e)=> {
                             if (limitShownPrintingPoints) {
-                                setPrintingPointId(-1);
+                                setPrintingPointId(null);
                                 setLimitShownPrintingPoints(null);
                             } else {
                                 const path = e.nativeEvent.composedPath();
@@ -241,7 +249,7 @@ export const OrderPage: React.FC = () => {
                 <div className={styles.priceCalculatorBasicInput}>
                     <label className={styles.priceCalculatorLabel}> Ilość Kopii </label>
                     <br/>
-                    <input name="copies" type="number" className={`${styles.priceCalculatorBasicInputField} ${styles.priceCalculatorInputBase}`}
+                    <input name="copies" type="number" min="1" className={`${styles.priceCalculatorBasicInputField} ${styles.priceCalculatorInputBase}`}
                            defaultValue={copies} onChange={(e)=> {
                         setCopies(e.target.valueAsNumber);
                     }}/>
@@ -249,7 +257,7 @@ export const OrderPage: React.FC = () => {
                 <div className={styles.priceCalculatorBasicInput}>
                     <label className={styles.priceCalculatorLabel}> Ilość stron </label>
                     <br/>
-                    <input name="page-count" type="number" className={`${styles.priceCalculatorBasicInputField} ${styles.priceCalculatorInputBase}`}
+                    <input name="page-count" type="number" min="1" className={`${styles.priceCalculatorBasicInputField} ${styles.priceCalculatorInputBase}`}
                            defaultValue={pageCount} onChange={(e)=> {
                         setPageCount(e.target.valueAsNumber);
                     }}/>
@@ -261,6 +269,7 @@ export const OrderPage: React.FC = () => {
                         <br/>
                         <input id="fileInput" name="file" type="file" className={`${styles.priceCalculatorFileInput} ${styles.priceCalculatorInputBase}`}
                                onChange={(e)=> {
+                            setSelectedFile(e.target.files?.[0] ?? null);
                             setFilePath(e.target.value);
                             setNewFile(true);
                         }}/>
@@ -282,8 +291,9 @@ export const OrderPage: React.FC = () => {
                 <label className={styles.totalCostValue} style={costTextStyle} id="costText">{costValidity ? `${cost}zł` : "Proszę wybrać punkt druku."}</label>
                 <br/>
 
+                {(mutationNewOrder.isPending || RateSheetQueryIsPending || PrintingPointQueryIsPending) && <ImSpinner2 className={`icon-spin ${styles.icon_spin}`}/>}
                 {(role != 'GOSC' ) && (
-                    <input className={styles.orderButton} type="submit" value={`${editing ? "Edytuj" : "Złóż"} Zamówienie`}/>
+                    <input className={styles.orderButton} type="submit" value={`${editing ? "Edytuj" : "Złóż"} Zamówienie`} disabled={mutationNewOrder.isPending || RateSheetQueryIsPending || PrintingPointQueryIsPending}/>
                 )}
                 {(role === 'GOSC' ) && (
                     <input className={styles.orderButton} type="submit" value="Wymagane Zalogowanie"/>

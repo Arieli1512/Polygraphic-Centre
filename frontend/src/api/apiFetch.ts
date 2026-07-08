@@ -65,8 +65,6 @@ export async function apiFetch<T>(endpoint: string, options: ApiFetchOptions = {
     };
     // ✨ HANDLE FORMDATA VS JSON LOGIC HERE
     if (bodyData && (bodyData instanceof FormData)) {
-        console.log("Type of bodyData:", bodyData.constructor.name);
-        console.log("Is instance of FormData?:", bodyData instanceof FormData);
         // Remove the application/json header so the browser defaults to multipart/form-data
         if (config.headers && typeof config.headers === 'object') {
             delete (config.headers as Record<string, string>)['Content-Type'];

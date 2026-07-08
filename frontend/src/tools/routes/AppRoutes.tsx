@@ -9,12 +9,11 @@ import { OrderPage } from '../../pages/order/OrderPage.tsx';
 import { PrintingPointsPage } from '../../pages/public/PrintingPointsPage.tsx';
 import { OrderHistoryPage } from '../../pages/order/OrderHistoryPage.tsx';
 import { WalletPage } from '../../pages/wallet/WalletPage.tsx';
-/*
-import { OperatorQueuePage } from '../../pages/queue/OperatorQueuePage.tsx';
-import { PricingConfigPage } from '../../pages/admin/PricingConfigPage.tsx';
-*/
+import { OrderQueuePage } from '../../pages/order/OrderQueuePage.tsx';
+import { GeneralManagementPage } from '../../pages/admin/GeneralManagementPage.tsx';
+import { OperatorsPage } from '../../pages/admin/OperatorsPage.tsx';
 
-export const AppRoutes = () => {
+const AppRoutes = () => {
     return (
         <Routes>
             <Route element={<MainLayout />}>
@@ -33,14 +32,13 @@ export const AppRoutes = () => {
 
                 {/* Ścieżki dla EMPLOYEE (Pracownika) i ADMINA */}
                 <Route element={<RoleGuard allowedRoles={['EMPLOYEE', 'ADMIN']} />}>
-                    {/*<Route path="/operator/queue" element={<OrderQueuePage />} />*/}
+                    <Route path="/operator/queue" element={<OrderQueuePage />} />
                 </Route>
 
                 {/* Ścieżki tylko dla ADMINA */}
                 <Route element={<RoleGuard allowedRoles={['ADMIN']} />}>
-                    {/* <Route path="/admin/ratesheet" element={<RateSheetPage />} />
+                    <Route path="/admin/management" element={<GeneralManagementPage />} />
                     <Route path="/admin/operators" element={<OperatorsPage />} />
-                    <Route path="/admin/hours" element={<OpeningHoursPage />} />*/}
                 </Route>
 
             </Route>
@@ -50,3 +48,4 @@ export const AppRoutes = () => {
         </Routes>
     );
 };
+export default AppRoutes

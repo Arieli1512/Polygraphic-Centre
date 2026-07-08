@@ -38,6 +38,12 @@
     border-color: var(--text-h);
 }
 
+.walletMain button:disabled {
+    background-color: var(--bg);
+    color: var(--accent-bg);
+    border-color: var(--accent-bg);
+}
+
 .walletTopUpContainer {
     border: 2px dashed var(--accent);
     border-top-width: 0;

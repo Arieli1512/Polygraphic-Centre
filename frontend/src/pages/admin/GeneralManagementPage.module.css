@@ -1,0 +1,42 @@
+.managementMain {
+    text-align: center;
+    width: 100%;
+}
+
+.managementTablesContainer {
+    display: flex;
+    flex-wrap: wrap;
+    width: 100%;
+    justify-content: center;
+}
+
+.managementTableDiv {
+    background-color: var(--accent-bg);
+    border: 2px dashed var(--accent);
+    border-radius: 25px;
+    margin: 20px;
+    padding-top: 5px;
+    overflow: hidden;
+}
+
+.managementMain button {
+    font-size: 1.5rem;
+    font-weight: bold;
+    padding: 15px;
+    border-radius: 20px;
+    background-color: var(--accent-bg);
+    border-color: var(--accent);
+    color: var(--text-h);
+}
+
+.managementMain button:hover {
+    background-color: var(--accent);
+    border-color: var(--text-h);
+    color: var(--bg);
+}
+
+.managementMain button:disabled {
+    background-color: var(--bg);
+    border-color: var(--accent);
+    color: var(--accent-bg);
+}

@@ -1,0 +1,56 @@
+
+.operatorsTable {
+    --active: var(--accent);
+    --blocked: var(--bg);
+
+    border-collapse: separate;
+    border-spacing: 0 0;
+    width: 97%;
+    margin: 20px;
+}
+
+.operatorsTable tbody {
+    overflow-x: auto;
+}
+
+.operatorsTableSpacer {
+    height: 20px;
+}
+
+.operatorsTable thead {
+    color: var(--text-h);
+    font-weight: bold;
+    text-align: center;
+    font-size: 1.1rem;
+    vertical-align: bottom;
+}
+
+.operatorRow {
+    --borderColor: var(--accent);
+    --borderRadius: 8px;
+    --borderStyle: groove;
+    --borderWidth: 10px;
+    text-shadow: var(--bg) 3px 3px;
+}
+
+.operatorRow td {
+    background-color: var(--accent-bg);
+    color: var(--text-h);
+    font-size: 1.2rem;
+    border: 1px solid var(--accent-bg);
+    padding: 16px;
+}
+
+.operatorRow td:first-child {
+    font-weight: bold;
+    border-left: var(--borderWidth) var(--borderStyle) var(--borderColor);
+    border-top-left-radius: var(--borderRadius);
+    border-bottom-left-radius: var(--borderRadius);
+}
+
+.operatorRow td:last-child {
+    color: var(--borderColor);
+    border-right: var(--borderWidth) var(--borderStyle) var(--borderColor);
+    border-top-right-radius: var(--borderRadius);
+    border-bottom-right-radius: var(--borderRadius);
+}

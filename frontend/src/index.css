@@ -108,3 +108,20 @@ code {
   padding: 4px 8px;
   background: var(--code-bg);
 }
+
+.icon-spin {
+  font-size: 30px;
+  animation: spin 1s linear infinite;
+  color: var(--accent);
+  margin-right: 8px; /* Adds space between the icon and text */
+  justify-self: center;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}

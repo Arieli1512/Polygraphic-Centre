@@ -1,0 +1,128 @@
+.orderHistoryContainer {
+    --pending: #dac063;
+    --approved: #5497da;
+    --ready: #a873f3;
+    --dispensed: #39ba35;
+    --cancelled: var(--accent-bg);
+    overflow-x: scroll;
+    scrollbar-color: var(--accent) var(--accent-bg);
+    transform: rotateX(180deg);
+
+}
+
+.orderHistoryTable {
+    border-collapse: separate;
+    border-spacing: 0 0;
+    width: 97%;
+    margin: 20px;
+    transform: rotateX(180deg);
+}
+
+.orderHistoryTable tbody {
+    overflow-x: auto;
+}
+
+.orderHistoryTableSpacer {
+    height: 20px;
+}
+
+.orderHistoryTable thead {
+    color: var(--text-h);
+    font-weight: bold;
+    text-align: center;
+    font-size: 1.1rem;
+    vertical-align: bottom;
+}
+
+.orderRow {
+    --borderColor: var(--accent);
+    --borderRadius: 8px;
+    --borderStyle: groove;
+    --borderWidth: 10px;
+    text-shadow: var(--bg) 3px 3px;
+}
+
+.orderRow td {
+    background-color: var(--accent-bg);
+    color: var(--text-h);
+    font-size: 1.2rem;
+    border: 1px solid var(--accent-bg);
+    padding: 16px;
+}
+
+.orderRow td:first-child {
+    color: var(--borderColor);
+    font-weight: bold;
+    border-left: var(--borderWidth) var(--borderStyle) var(--borderColor);
+    border-top-left-radius: var(--borderRadius);
+    border-bottom-left-radius: var(--borderRadius);
+}
+
+.orderRow td:last-child {
+    border-right: var(--borderWidth) var(--borderStyle) var(--borderColor);
+    border-top-right-radius: var(--borderRadius);
+    border-bottom-right-radius: var(--borderRadius);
+}
+
+.tdCentered {
+    text-align: center;
+    font-weight: bold;
+}
+
+.orderHistoryButton {
+    background-color: var(--bg);
+    border-color: var(--accent);
+    color: var(--accent);
+}
+
+.orderHistoryButton:hover {
+    background-color: var(--accent-bg);
+    color: var(--text-h);
+    border-color: var(--text-h);
+}
+
+.orderHistoryButton:disabled {
+    background-color: var(--bg);
+    border-color: var(--accent-bg);
+    color: var(--accent-bg);
+}
+
+.orderHistoryIcons {
+    width: 50px;
+    height: 50px;
+}
+
+.detailsRow {
+    text-align: center;
+    text-shadow: var(--bg) 3px 3px;
+}
+
+.detailsRowDiv {
+    border: 1px solid var(--accent-bg);
+    margin: 0 10px 0 10px;
+    padding: 10px 0 10px 0;
+    background-color: var(--accent-bg);
+    border-bottom-left-radius: 8px;
+    border-bottom-right-radius: 8px;
+}
+
+.orderDetailsSpan {
+    margin: 0 10px 10px 0;
+    padding: 5px;
+    color: var(--text-h);
+}
+
+.orderEditButton {
+    background-color: var(--bg);
+    border-color: var(--accent);
+    color: var(--accent);
+    font-weight: bold;
+    padding: 5px;
+}
+
+.orderEditButton:hover {
+    background-color: var(--accent-bg);
+    color: var(--text-h);
+    border-color: var(--text-h);
+}
+

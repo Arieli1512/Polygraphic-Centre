@@ -1,6 +1,3 @@
-import {queryOptions} from "@tanstack/react-query";
-import {apiFetch} from "./apiFetch.ts";
-
 export interface Client {
     client_id: number;
     email: string;
@@ -12,6 +9,7 @@ export interface Client {
     updated_at?: string;
 }
 
+/*
 export function createGetClientQuery(id: number) {
     return queryOptions({
         queryKey: [`GET_CLIENT_${id}`],
@@ -20,3 +18,5 @@ export function createGetClientQuery(id: number) {
         },
     });
 }
+
+ */

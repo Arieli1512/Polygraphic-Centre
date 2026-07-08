@@ -34,19 +34,14 @@ export const HomePage: React.FC = () => {
                         {role === 'ADMIN' && (
                             <>
                                 <button
-                                    onClick={() => navigate('/admin/ratesheet')}
+                                    onClick={() => navigate('/admin/management')}
                                     className={styles.navigationCard}>
-                                    Zarządzanie Cenami
+                                    Zarządzanie Punktem Druku
                                 </button>
                                 <button
                                     onClick={() => navigate('/admin/operators')}
                                     className={styles.navigationCard}>
                                     Zarządzanie Pracownikami
-                                </button>
-                                <button
-                                    onClick={() => navigate('/admin/hours')}
-                                    className={styles.navigationCard}>
-                                    Zarządzanie Godzinami Otwarcia
                                 </button>
                             </>
                         )}

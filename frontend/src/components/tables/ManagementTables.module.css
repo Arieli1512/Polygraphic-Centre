@@ -1,0 +1,36 @@
+.managementTable {
+    background-color: var(--accent-bg);
+    border-top: 2px dashed var(--accent);
+    margin: auto;
+    padding: 20px;
+}
+
+.managementTable th {
+    background-color: var(--bg);
+    padding: 3px 9px;
+    border-radius: 10px;
+}
+
+.managementTable thead {
+
+}
+
+.managementTable thead th{
+
+}
+
+.managementTable input{
+    font-size: 1rem;
+    background-color: var(--bg);
+    border-color: var(--accent);
+    color: var(--text-h);
+}
+
+.managementTable input:hover{
+    background-color: var(--accent-bg);
+    border-color: var(--text-h);
+}
+
+.managementTable input:disabled{
+    color: var(--accent-bg);
+}

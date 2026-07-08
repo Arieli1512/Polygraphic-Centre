@@ -14,9 +14,14 @@ export interface PrintSettings {
 
 export function createOrderDetailsQuery(order_id: number) {
     return queryOptions({
-        queryKey: [`GET_ORDER_DETAILS_${order_id}`],
-        queryFn: (): Promise<PrintSettings> => {
-            return apiFetch(`/orders/${order_id}/print-settings`);
+        queryKey: ['orderDetails', `order${order_id}`],
+        queryFn: async (): Promise<PrintSettings> => {
+            try {
+                return await apiFetch(`/orders/${order_id}/print-settings`);
+            } catch (e) {
+                console.error(`[API Error] Failed to fetch order details for order ${order_id}, defaulting to mock data.`, e);
+                return {order_id: 1, format: "A4", paper_type: "standardowy", color_mode: "COLOR", duplex: "DOUBLE_SIDED", orientation: "PORTRAIT", finishing: "BINDING", copies: 2};
+            }
         },
     });
 }
