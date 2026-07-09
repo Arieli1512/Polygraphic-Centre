@@ -628,6 +628,13 @@ Runtime requirements:
 1. Cloud Run runtime account can sign blobs (`roles/iam.serviceAccountTokenCreator` on itself).
 2. Cloud Run runtime account has bucket object permissions (viewer/creator/admin according to needs).
 3. Bucket CORS allows browser `PUT` from frontend origin.
+4. Cloud Run env includes `GCS_BUCKET_NAME` (required), `GCS_PROJECT_ID` (recommended), and `GCS_SIGNING_SERVICE_ACCOUNT_EMAIL` (recommended fallback for IAM signing).
+
+If `GCS_BUCKET_NAME` is missing, upload URL generation fails with:
+
+```text
+java.lang.IllegalStateException: gcs.bucket-name must be configured for signed URL generation
+```
 
 Example CORS file (`cors.json`):
 
@@ -749,6 +756,7 @@ Set these on Cloud Run service:
 - `PUBSUB_STORAGE_UPLOADS_TOPIC_NAME=storage-uploads`
 - `PUBSUB_REQUIRE_OIDC=true`
 - `PUBSUB_WEBHOOK_AUDIENCE=${BACKEND_SERVICE_URL}`
+- `GCS_PROJECT_ID=drobnyd-b1d45`
 - `GCS_BUCKET_NAME=my-free-app-bucket-drobnyd-b1d45`
 - `GCS_UPLOAD_ROOT_PREFIX=clients`
 - `GCS_SIGNING_SERVICE_ACCOUNT_EMAIL=backend-runtime@drobnyd-b1d45.iam.gserviceaccount.com`

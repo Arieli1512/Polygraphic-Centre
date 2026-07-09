@@ -66,7 +66,10 @@ public class GcsSignedUrlService {
                 .build();
 
         Map<String, String> extHeaders = new HashMap<>();
-        extHeaders.put("content-type", contentType);
+        // Do not sign Content-Type as an ext header for browser uploads.
+        // Some browser/proxy combinations can drop or normalize it in a way that
+        // makes GCS reject the request with MalformedSecurityHeader.
+        // Keep only explicit metadata headers in the signature.
         metadataHeaders.forEach((key, value) -> extHeaders.put(key.toLowerCase(), value));
 
         URL signedUrl = storage.signUrl(
