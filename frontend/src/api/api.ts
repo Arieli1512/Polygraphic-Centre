@@ -6,6 +6,39 @@ interface RetryableRequestConfig extends InternalAxiosRequestConfig {
   _retry?: boolean;
 }
 
+function resolveApiBaseUrl(): string {
+  const configuredBaseUrl =
+    import.meta.env.VITE_API_BASE_URL ?? import.meta.env.VITE_API_URL;
+
+  if (!configuredBaseUrl) {
+    return "/api";
+  }
+
+  const isFirebaseHostingDomain =
+    globalThis.location?.hostname.endsWith(".web.app") ||
+    globalThis.location?.hostname.endsWith(".firebaseapp.com");
+
+  if (!isFirebaseHostingDomain) {
+    return configuredBaseUrl;
+  }
+
+  try {
+    const targetUrl = new URL(configuredBaseUrl, globalThis.location.origin);
+    const isDirectCloudRunTarget = targetUrl.hostname.endsWith(".run.app");
+
+    if (isDirectCloudRunTarget) {
+      console.warn(
+        "[API] Overriding direct Cloud Run API base URL on Firebase Hosting. Using same-origin /api to preserve cookie auth.",
+      );
+      return "/api";
+    }
+  } catch {
+    // If URL parsing fails, keep configured value.
+  }
+
+  return configuredBaseUrl;
+}
+
 /**
  * Global Axios instance configured for Polygraphic Centre API.
  *
@@ -18,8 +51,7 @@ interface RetryableRequestConfig extends InternalAxiosRequestConfig {
  * - Error response normalization
  */
 const api = axios.create({
-  baseURL:
-    import.meta.env.VITE_API_BASE_URL ?? import.meta.env.VITE_API_URL ?? "/api",
+  baseURL: resolveApiBaseUrl(),
   // Enable credentials to include httpOnly cookies in requests
   withCredentials: true,
   // Axios only sends the XSRF header automatically for same-origin requests.

@@ -49,6 +49,8 @@ public class AuthCookieService {
 
     public static final String ACCESS_COOKIE_NAME = "pc_access_token";
     public static final String REFRESH_COOKIE_NAME = "pc_refresh_token";
+    // Firebase Hosting reliably forwards __session cookie through rewrites.
+    public static final String HOSTING_SESSION_COOKIE_NAME = "__session";
     private final AuthProperties authProperties;
 
     public AuthCookieService(AuthProperties authProperties) {
@@ -60,6 +62,9 @@ public class AuthCookieService {
                 buildCookie(ACCESS_COOKIE_NAME, accessToken, accessCookieMaxAgeSeconds()).toString());
         response.addHeader(HttpHeaders.SET_COOKIE,
                 buildCookie(REFRESH_COOKIE_NAME, refreshToken, refreshCookieMaxAgeSeconds()).toString());
+        // Keep refresh token mirrored in __session for Firebase Hosting rewrites.
+        response.addHeader(HttpHeaders.SET_COOKIE,
+                buildCookie(HOSTING_SESSION_COOKIE_NAME, refreshToken, refreshCookieMaxAgeSeconds()).toString());
     }
 
     public void clearSessionCookies(HttpServletRequest request, HttpServletResponse response) {
@@ -71,6 +76,8 @@ public class AuthCookieService {
         for (String path : cookiePathsToClear(request)) {
             response.addHeader(HttpHeaders.SET_COOKIE, buildCookie(ACCESS_COOKIE_NAME, "", 0, path).toString());
             response.addHeader(HttpHeaders.SET_COOKIE, buildCookie(REFRESH_COOKIE_NAME, "", 0, path).toString());
+            response.addHeader(HttpHeaders.SET_COOKIE,
+                    buildCookie(HOSTING_SESSION_COOKIE_NAME, "", 0, path).toString());
         }
 
         response.addHeader(HttpHeaders.SET_COOKIE, buildSessionCookie("JSESSIONID", "/"));
@@ -82,7 +89,11 @@ public class AuthCookieService {
     }
 
     public String readRefreshToken(HttpServletRequest request) {
-        return cookieValue(request, REFRESH_COOKIE_NAME);
+        String refresh = cookieValue(request, REFRESH_COOKIE_NAME);
+        if (refresh != null && !refresh.isBlank()) {
+            return refresh;
+        }
+        return cookieValue(request, HOSTING_SESSION_COOKIE_NAME);
     }
 
     private String cookieValue(HttpServletRequest request, String cookieName) {
