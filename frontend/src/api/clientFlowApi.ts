@@ -95,6 +95,7 @@ export async function uploadFileToSignedUrl(
   await new Promise<void>((resolve, reject) => {
     const xhr = new XMLHttpRequest();
     xhr.open("PUT", uploadRequest.uploadUrl, true);
+    xhr.timeout = 60_000;
 
     Object.entries(uploadRequest.uploadHeaders).forEach(([key, value]) => {
       xhr.setRequestHeader(key, value);
@@ -131,7 +132,19 @@ export async function uploadFileToSignedUrl(
     };
 
     xhr.onerror = () => {
-      reject(new Error("Network error while uploading file to storage"));
+      reject(
+        new Error(
+          "Network error while uploading file to storage. This is usually caused by bucket CORS mismatch, blocked preflight OPTIONS request, or connectivity issues.",
+        ),
+      );
+    };
+
+    xhr.ontimeout = () => {
+      reject(
+        new Error(
+          "Timed out while uploading file to storage. Check network stability and bucket CORS settings.",
+        ),
+      );
     };
 
     xhr.onabort = () => {
