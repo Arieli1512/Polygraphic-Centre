@@ -45,8 +45,21 @@ public class FirebaseTokenFilter extends OncePerRequestFilter {
 
         String headerToken = authorizationHeaderToken(request);
         String cookieToken = authCookieService.readAccessToken(request);
+        String refreshCookieToken = authCookieService.readRefreshToken(request);
 
-        if (isBlank(headerToken) && isBlank(cookieToken)) {
+        if (log.isDebugEnabled()) {
+            log.debug(
+                    "Auth probe {} {} host={} origin={} authHeaderPresent={} accessCookiePresent={} refreshCookiePresent={}",
+                    request.getMethod(),
+                    request.getRequestURI(),
+                    request.getHeader("Host"),
+                    request.getHeader("Origin"),
+                    !isBlank(headerToken),
+                    !isBlank(cookieToken),
+                    !isBlank(refreshCookieToken));
+        }
+
+        if (isBlank(headerToken) && isBlank(cookieToken) && isBlank(refreshCookieToken)) {
             filterChain.doFilter(request, response);
             return;
         }
@@ -59,6 +72,15 @@ public class FirebaseTokenFilter extends OncePerRequestFilter {
         }
 
         if (tryAuthenticate(request, cookieToken, "access-cookie")) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
+        // Resilience fallback for production proxy/cookie edge-cases:
+        // if access token is missing/invalid but refresh token is valid, allow
+        // authentication using refresh token claims so protected endpoints do not
+        // enter a 401->refresh infinite loop in the SPA.
+        if (tryAuthenticateWithRefreshToken(request, refreshCookieToken)) {
             filterChain.doFilter(request, response);
             return;
         }
@@ -91,6 +113,30 @@ public class FirebaseTokenFilter extends OncePerRequestFilter {
         } catch (JWTVerificationException exception) {
             log.warn("Authentication token rejected from {} for {} {}: {}",
                     tokenSource,
+                    request.getMethod(),
+                    request.getRequestURI(),
+                    exception.getMessage());
+            return false;
+        }
+    }
+
+    private boolean tryAuthenticateWithRefreshToken(HttpServletRequest request, String refreshToken) {
+        if (isBlank(refreshToken)) {
+            return false;
+        }
+
+        try {
+            SessionUser sessionUser = authTokenService.toSessionUser(authTokenService.verifyRefreshToken(refreshToken));
+            UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
+                    sessionUser,
+                    null,
+                    sessionUser.authorities());
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+            log.warn("Authenticated via refresh-cookie fallback for {} {}. Access token was missing or invalid.",
+                    request.getMethod(), request.getRequestURI());
+            return true;
+        } catch (JWTVerificationException exception) {
+            log.warn("Refresh token rejected for {} {}: {}",
                     request.getMethod(),
                     request.getRequestURI(),
                     exception.getMessage());
