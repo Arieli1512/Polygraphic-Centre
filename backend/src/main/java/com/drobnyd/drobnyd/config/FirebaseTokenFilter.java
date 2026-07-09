@@ -58,7 +58,7 @@ public class FirebaseTokenFilter extends OncePerRequestFilter {
             return;
         }
 
-        if (!isBlank(headerToken) && tryAuthenticate(request, cookieToken, "access-cookie")) {
+        if (tryAuthenticate(request, cookieToken, "access-cookie")) {
             filterChain.doFilter(request, response);
             return;
         }
