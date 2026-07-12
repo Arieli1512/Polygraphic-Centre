@@ -22,6 +22,7 @@ import com.drobnyd.drobnyd.service.NotificationService;
 import com.drobnyd.drobnyd.service.NotificationWorkerService;
 import com.drobnyd.drobnyd.service.PubSubOidcTokenValidator;
 import com.drobnyd.drobnyd.service.model.OrderEventMessage;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import jakarta.validation.Valid;
@@ -163,6 +164,7 @@ public class PubSubWebhookController {
             @NotNull Map<String, String> attributes) {
     }
 
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public record StorageFinalizePayload(
             String bucketId,
             String objectId,
