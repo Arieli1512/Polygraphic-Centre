@@ -95,6 +95,7 @@ public class SecurityConfig {
                 // X-XSRF-TOKEN header
                 // This allows frontend JavaScript to read the token and send it back
                 .csrf(csrf -> csrf
+                        .ignoringRequestMatchers("/api/webhooks/pubsub/**")
                         .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
                         .csrfTokenRequestHandler(new SpaCsrfTokenRequestHandler()))
 
