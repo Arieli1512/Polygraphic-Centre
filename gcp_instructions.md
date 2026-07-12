@@ -807,6 +807,65 @@ Quick sanity checks for integration flags:
 2. `MAIL_ENABLED=true` only when SMTP settings are present and valid.
 3. `GCS_BUCKET_NAME` is set (required for signed URLs).
 
+### 13.7. Fix "Pub/Sub disabled" and enable end-to-end notifications
+
+If logs show:
+
+```text
+Pub/Sub disabled - skipping publish for topic=order-events
+```
+
+then backend runtime config is incomplete. Apply all integration flags in one update:
+
+```bash
+gcloud run services update backend-service \
+    --project="$PROJECT_ID" \
+    --region="$REGION" \
+    --update-env-vars="^@^SPRING_PROFILES_ACTIVE=prod@FIREBASE_PROJECT_ID=${PROJECT_ID}@PUBSUB_ENABLED=true@PUBSUB_PROJECT_ID=${PROJECT_ID}@PUBSUB_ORDER_EVENTS_TOPIC_NAME=order-events@PUBSUB_NOTIFICATION_EVENTS_TOPIC_NAME=notification-events@PUBSUB_STORAGE_UPLOADS_TOPIC_NAME=storage-uploads@PUBSUB_REQUIRE_OIDC=true@PUBSUB_WEBHOOK_AUDIENCE=${BACKEND_SERVICE_URL}@GCS_PROJECT_ID=${PROJECT_ID}@GCS_BUCKET_NAME=${BUCKET_NAME}@GCS_UPLOAD_ROOT_PREFIX=clients@GCS_SIGNING_SERVICE_ACCOUNT_EMAIL=backend-runtime@${PROJECT_ID}.iam.gserviceaccount.com"
+```
+
+Enable email dispatch only when SMTP credentials are configured:
+
+```bash
+gcloud run services update backend-service \
+    --project="$PROJECT_ID" \
+    --region="$REGION" \
+    --update-env-vars="MAIL_ENABLED=true,MAIL_FROM_ADDRESS=YOUR_FROM_ADDRESS,MAIL_HOST=YOUR_SMTP_HOST,MAIL_PORT=587,MAIL_USERNAME=YOUR_SMTP_USERNAME" \
+    --set-secrets="MAIL_PASSWORD=mail-password:latest"
+```
+
+If you do not yet have SMTP credentials, keep:
+
+```text
+MAIL_ENABLED=false
+```
+
+to test Pub/Sub and webhook flow without real mail sending.
+
+Verify active values on Cloud Run revision:
+
+```bash
+gcloud run services describe backend-service \
+    --project="$PROJECT_ID" \
+    --region="$REGION" \
+    --format="yaml(spec.template.spec.containers[0].env)"
+```
+
+Verify startup logs include effective Pub/Sub config:
+
+```bash
+gcloud run services logs read backend-service \
+    --project="$PROJECT_ID" \
+    --region="$REGION" \
+    --limit=200 | grep -i "Pub/Sub configuration"
+```
+
+Expected startup log pattern:
+
+```text
+Pub/Sub configuration: enabled=true projectIdPresent=true ...
+```
+
 ## 14. Frontend deployment on Firebase Hosting (recommended)
 
 This approach is the simplest integration for your current stack and free-tier goals:

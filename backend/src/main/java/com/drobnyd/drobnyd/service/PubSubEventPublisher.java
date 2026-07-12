@@ -20,6 +20,7 @@ import com.google.protobuf.ByteString;
 import com.google.pubsub.v1.ProjectTopicName;
 import com.google.pubsub.v1.PubsubMessage;
 
+import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 
 @Service
@@ -34,6 +35,17 @@ public class PubSubEventPublisher {
     public PubSubEventPublisher(PubSubProperties pubSubProperties, ObjectMapper objectMapper) {
         this.pubSubProperties = pubSubProperties;
         this.objectMapper = objectMapper;
+    }
+
+    @PostConstruct
+    void logConfiguration() {
+        log.info(
+                "Pub/Sub configuration: enabled={} projectIdPresent={} orderTopic={} notificationTopic={} storageTopic={}",
+                pubSubProperties.enabled(),
+                !pubSubProperties.projectId().isBlank(),
+                pubSubProperties.orderEventsTopicName(),
+                pubSubProperties.notificationEventsTopicName(),
+                pubSubProperties.storageUploadsTopicName());
     }
 
     public void publish(String topicName, Object payload, Map<String, String> attributes) {
