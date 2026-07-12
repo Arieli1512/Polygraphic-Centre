@@ -35,6 +35,11 @@ public class FirebaseTokenFilter extends OncePerRequestFilter {
     }
 
     @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        return request.getRequestURI().startsWith("/api/webhooks/pubsub/");
+    }
+
+    @Override
     protected void doFilterInternal(@Nullable HttpServletRequest request, @Nullable HttpServletResponse response,
             @Nullable FilterChain filterChain)
             throws ServletException, IOException {

@@ -3,7 +3,9 @@ package com.drobnyd.drobnyd.controller;
 import java.nio.charset.StandardCharsets;
 import java.time.OffsetDateTime;
 import java.util.Base64;
+import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
@@ -22,7 +24,9 @@ import com.drobnyd.drobnyd.service.NotificationService;
 import com.drobnyd.drobnyd.service.NotificationWorkerService;
 import com.drobnyd.drobnyd.service.PubSubOidcTokenValidator;
 import com.drobnyd.drobnyd.service.model.OrderEventMessage;
+import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import jakarta.validation.Valid;
@@ -92,28 +96,38 @@ public class PubSubWebhookController {
         String requestId = requestId();
         try {
             String json = decodeData(request.message().data());
+            JsonNode payloadNode = objectMapper.readTree(json);
             StorageFinalizePayload payload = objectMapper.readValue(json, StorageFinalizePayload.class);
+            String eventType = resolveStorageEventType(payload, payloadNode, request.message().attributes());
+            String bucketId = resolveBucketId(payload, payloadNode, request.message().attributes());
+            String objectId = resolveObjectId(payload, payloadNode, request.message().attributes());
 
-            if (!"OBJECT_FINALIZE".equals(payload.eventType())) {
+            log.info("[{}] Storage webhook messageId={} attrs={} payloadKeys={}",
+                    requestId,
+                    request.message().messageId(),
+                    request.message().attributes(),
+                    topLevelFieldNames(payloadNode));
+
+            if (!"OBJECT_FINALIZE".equals(eventType)) {
                 log.info("[{}] Ignoring non-finalize storage eventType={} messageId={}",
                         requestId,
-                        payload.eventType(),
+                        eventType,
                         request.message().messageId());
                 return ResponseEntity.noContent().build();
             }
 
-            Integer clientId = extractClientIdFromObjectPath(payload.objectId());
+            Integer clientId = extractClientIdFromObjectPath(objectId);
             log.info("[{}] Received storage finalize messageId={} bucket={} objectId={} clientId={} topic={}",
                     requestId,
                     request.message().messageId(),
-                    payload.bucketId(),
-                    payload.objectId(),
+                    bucketId,
+                    objectId,
                     clientId,
                     pubSubProperties.storageUploadsTopicName());
 
             notificationService.publishStorageObjectFinalized(
-                    payload.bucketId(),
-                    payload.objectId(),
+                    bucketId,
+                    objectId,
                     clientId,
                     requestId);
 
@@ -147,6 +161,96 @@ public class PubSubWebhookController {
         return new String(decoded, StandardCharsets.UTF_8);
     }
 
+    private String resolveStorageEventType(
+            StorageFinalizePayload payload,
+            JsonNode payloadNode,
+            @Nullable Map<String, String> attributes) {
+        if (payload.eventType() != null && !payload.eventType().isBlank()) {
+            return payload.eventType();
+        }
+
+        String payloadNodeEventType = textValue(payloadNode, "eventType");
+        if (payloadNodeEventType != null) {
+            return payloadNodeEventType;
+        }
+
+        if (attributes == null || attributes.isEmpty()) {
+            return null;
+        }
+
+        String attributeEventType = attributes.get("eventType");
+        return attributeEventType == null || attributeEventType.isBlank() ? null : attributeEventType;
+    }
+
+    private String resolveBucketId(
+            StorageFinalizePayload payload,
+            JsonNode payloadNode,
+            @Nullable Map<String, String> attributes) {
+        if (payload.bucketId() != null && !payload.bucketId().isBlank()) {
+            return payload.bucketId();
+        }
+
+        String payloadNodeBucket = textValue(payloadNode, "bucketId", "bucket");
+        if (payloadNodeBucket != null) {
+            return payloadNodeBucket;
+        }
+
+        return valueFromAttributes(attributes, "bucketId", "bucket");
+    }
+
+    private String resolveObjectId(
+            StorageFinalizePayload payload,
+            JsonNode payloadNode,
+            @Nullable Map<String, String> attributes) {
+        if (payload.objectId() != null && !payload.objectId().isBlank()) {
+            return payload.objectId();
+        }
+
+        String payloadNodeObject = textValue(payloadNode, "objectId", "name");
+        if (payloadNodeObject != null) {
+            return payloadNodeObject;
+        }
+
+        return valueFromAttributes(attributes, "objectId", "name");
+    }
+
+    private String valueFromAttributes(@Nullable Map<String, String> attributes, String... keys) {
+        if (attributes == null || attributes.isEmpty()) {
+            return null;
+        }
+
+        for (String key : keys) {
+            String value = attributes.get(key);
+            if (value != null && !value.isBlank()) {
+                return value;
+            }
+        }
+
+        return null;
+    }
+
+    private String textValue(JsonNode node, String... keys) {
+        for (String key : keys) {
+            JsonNode child = node.get(key);
+            if (child != null && !child.isNull()) {
+                String value = child.asText(null);
+                if (value != null && !value.isBlank()) {
+                    return value;
+                }
+            }
+        }
+        return null;
+    }
+
+    private Set<String> topLevelFieldNames(JsonNode node) {
+        Iterator<String> fieldNames = node.fieldNames();
+        java.util.LinkedHashSet<String> names = new java.util.LinkedHashSet<>();
+        while (fieldNames.hasNext()) {
+            names.add(fieldNames.next());
+        }
+        return names;
+    }
+
     private String requestId() {
         String requestId = MDC.get("requestId");
         return requestId == null || requestId.isBlank() ? "unknown-request" : requestId;
@@ -166,8 +270,8 @@ public class PubSubWebhookController {
 
     @JsonIgnoreProperties(ignoreUnknown = true)
     public record StorageFinalizePayload(
-            String bucketId,
-            String objectId,
+            @JsonAlias("bucket") String bucketId,
+            @JsonAlias("name") String objectId,
             String eventType,
             String payloadFormat,
             String objectGeneration,
