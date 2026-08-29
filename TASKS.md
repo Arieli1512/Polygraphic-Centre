@@ -122,6 +122,8 @@ Uwaga: to jest model wersji roboczej v0 oparty o erDiagram.mmd i punkt wyjścia 
 - Weryfikacja tokenu JWT i ekstrakcja oświadczeń
 - Mapowanie ról z oświadczeń do ról aplikacji
 - Adnotacje @Secured i @PreAuthorize
+- Obsłużyć niespójność między kontem Firebase a lokalnym rekordem użytkownika (np. konto istnieje w Firebase, ale rekord w PostgreSQL został usunięty lub email jest już zajęty)
+- Zwracać przewidywalny błąd domenowy i ścieżkę naprawczą zamiast wymuszać ręczne czyszczenie bazy lub reset środowiska
 
 ### 2.6 Dodać zarządzanie konfiguracją
 
@@ -167,6 +169,7 @@ Uwaga: to jest model wersji roboczej v0 oparty o erDiagram.mmd i punkt wyjścia 
 - Funkcje logowania/wylogowania/rejestracji
 - Mechanizm odświeżenia tokenu
 - Zachowywanie stanu autentykacji w localStorage
+- Obsłużyć po stronie UI przypadki konfliktu konta lub zerwanego powiązania Firebase <-> lokalne konto i pokazać użytkownikowi czytelny komunikat wraz z dalszą akcją
 
 ### 3.3 Stworzyć warstwę klienta API
 

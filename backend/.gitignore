@@ -35,3 +35,10 @@ out/
 
 ### VS Code ###
 .vscode/
+
+src/main/resources/firebase-service-account.json
+src/main/resources/drobnyd-b1d45-3dc6d5acfe36.json
+src/main/resources/application-local.properties
+.env
+.env.local
+.env.*.local

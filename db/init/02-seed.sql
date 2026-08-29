@@ -1,5 +1,5 @@
 --------------------
--- Troje klientów
+-- Troje klientów (rekordy demonstracyjne bazy, nie konta Firebase do logowania)
 --------------------
 --------------------
 INSERT INTO
@@ -53,7 +53,7 @@ VALUES
     (4, 3, 5000);
 
 --------------------
--- Dwa punkty druku oraz troje operatów
+-- Dwa punkty druku oraz troje operatów (rekordy demonstracyjne bazy)
 --------------------
 --------------------
 INSERT INTO

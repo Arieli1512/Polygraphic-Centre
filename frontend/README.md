@@ -139,3 +139,4 @@ npm run preview
 - This project uses React 19 and TypeScript 6.
 - If you see a Node.js version mismatch, confirm the `node` command points to Node 18+.
 - Use the included package manager scripts rather than editing Vite configuration for standard local development.
+- Copy [frontend/.env.example](.env.example) to a local `.env` file and fill values from the Firebase project settings and the backend URL you use locally or in deployment.
